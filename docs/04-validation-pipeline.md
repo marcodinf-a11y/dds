@@ -38,6 +38,8 @@ Ring 0 rules are defined per level:
 
 LLM-based. Narrow prompts. Structured JSON output. Each check asks exactly one question and expects an issues list.
 
+**Determinism:** LLM-based checks are inherently non-deterministic. If running the same check twice produces different verdicts, the check prompt is too ambiguous — tighten it before proceeding. The system prompts below are designed to minimize variance through narrow questions and structured JSON output. Budget approximately 2K–5K tokens per Ring 1 check and 3K–8K tokens per Ring 2 check.
+
 #### System Prompt (All Ring 1 Checks)
 
 ```
@@ -445,7 +447,7 @@ These rules span document boundaries. All are deterministic (Ring 0 level). They
 |---|---|
 | CL-T01 | **Bidirectional consistency:** every task's `parent` references an impl doc that lists that task in its `atomic_tasks` array, and vice versa |
 | CL-T02 | Every impl doc with `status: decomposed` has ≥1 atomic task |
-| CL-T03 | The union of all `scope.modules` across an impl doc's atomic tasks equals the impl doc's `modules` (no module uncovered, no task exceeds boundary) |
+| CL-T03 | **Complete module coverage:** The union of all `scope.modules` across an impl doc's atomic tasks must exactly equal the impl doc's `modules`. Every declared module must be claimed by at least one task. A module should only be declared in an impl doc if at least one task will operate within it. For transitive dependencies (e.g., shared type modules accessed indirectly), include the module in a task's `scope.modules` if the task directly depends on it. |
 | CL-T04 | The union of all `context_refs` across an impl doc's atomic tasks covers all entries in the impl doc's `spec_sections` (full traceability) |
 | CL-T05 | Dependency ordering between impl docs is consistent with the `blocked_by`/`blocks` graph of their atomic tasks |
 
