@@ -39,7 +39,7 @@ No central counter. No coordination between agents. Collision probability is neg
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "SpecificationDefinition",
   "type": "object",
-  "required": ["id", "title", "description", "status", "version"],
+  "required": ["id", "title", "description_file", "status", "version"],
   "additionalProperties": false,
   "properties": {
     "id": {
@@ -52,7 +52,7 @@ No central counter. No coordination between agents. Collision probability is neg
       "minLength": 1,
       "description": "Human-readable title of the specification."
     },
-    "description": {
+    "description_file": {
       "type": "string",
       "pattern": "^spec-[0-9a-f]{8}\\.md$",
       "description": "Filename of the markdown specification document."
@@ -81,7 +81,7 @@ No central counter. No coordination between agents. Collision probability is neg
     "version": {
       "type": "integer",
       "minimum": 1,
-      "description": "Incremented on each substantive revision. When version changes, all downstream implementation documents are invalidated and must be re-validated."
+      "description": "Incremented on each substantive revision. When version changes, all downstream implementation documents are invalidated and must be re-validated. A revision is substantive when it adds, removes, or semantically changes any FR-XX, NFR-XX, System Constraint, or Glossary definition. Typo fixes, formatting changes, and clarifications that do not alter testable behavior do not require a version increment."
     }
   }
 }
@@ -102,13 +102,15 @@ draft ──── Ring 0+1+2 pass ────► validated ──── decomp
 
 Backward transitions are permitted. A `decomposed` spec reverts to `draft` when its version increments.
 
+**Small spec shortcut:** Specs with 10 or fewer functional requirements and a single functional area may decompose directly into atomic tasks, skipping the implementation document level. In this case, `implementation_docs` contains a single auto-generated impl doc that mirrors the spec's requirements 1:1. The three-level hierarchy exists to manage complexity — do not impose it when the spec is already atomic enough.
+
 ### Example
 
 ```json
 {
   "id": "spec-e8a2b4c6",
   "title": "Leakage Test Execution",
-  "description": "spec-e8a2b4c6.md",
+  "description_file": "spec-e8a2b4c6.md",
   "implementation_docs": ["impl-c9d2f4a1", "impl-a3b7e1f9"],
   "related_specs": ["spec-f1a9c3d7"],
   "status": "decomposed",
@@ -135,6 +137,17 @@ specified? What problem does it solve? Who are the users?
 
 Two to four paragraphs. Establish the domain, the business need, and
 the scope of what this specification addresses.
+
+### Version History (required when version > 1)
+
+When the spec version increments, append an entry here documenting
+what changed. Each entry should state the version number, date, and
+a brief summary of the substantive changes. This allows downstream
+teams to understand what triggered re-validation.
+
+- **v2 (2026-03-15):** Added FR-08 for device disconnect handling.
+  Tightened NFR-02 threshold from 3x to 2x polling interval.
+- **v1 (2026-03-01):** Initial version.
 
 ## Functional Requirements
 
@@ -191,19 +204,23 @@ use these terms consistently.
 
 ## Decomposition Guidance
 
-High-level guidance for splitting this specification into
+Structured guidance for splitting this specification into
 implementation documents. This section is consumed by the agent that
 performs the spec-to-implementation decomposition.
 
-Suggest natural boundaries along module, feature, or layer lines.
+For each suggested implementation boundary, provide:
+
+- **Name:** Short identifier (e.g., "Core Service Implementation")
+- **Coverage:** Explicit FR/NFR range (e.g., "FR-01–05, NFR-01–02")
+- **Module mapping:** Which code modules or projects it maps to
+- **Dependencies:** References to other boundaries or external
+  prerequisites
+- **Rationale:** Why this is a natural split point (cohesion,
+  testability, team ownership, etc.)
+
 Identify which functional areas are independent enough to be separate
 implementation documents and which are tightly coupled and should be
 grouped.
-
-For each suggested boundary, indicate:
-- Which functional requirement groups it covers
-- Which modules or projects it maps to
-- Dependencies on other suggested boundaries
 ```
 
 ### Example
@@ -335,7 +352,7 @@ Deterministic checks. No LLM. Milliseconds.
 |---|---|
 | R0-S01 | JSON validates against SpecificationDefinition schema |
 | R0-S02 | `id` is unique across all specification definitions |
-| R0-S03 | `description` file exists and is a valid markdown file |
+| R0-S03 | `description_file` file exists and is a valid markdown file |
 | R0-S04 | All entries in `implementation_docs` reference existing implementation definitions |
 | R0-S05 | All entries in `related_specs` reference existing specification definitions |
 | R0-S06 | No self-reference in `related_specs` |
@@ -347,6 +364,7 @@ Deterministic checks. No LLM. Milliseconds.
 | R0-S12 | Functional Requirements section contains at least one FR-XX entry |
 | R0-S13 | All FR-XX and NFR-XX identifiers are unique within the document |
 | R0-S14 | H1 spec-id matches the JSON definition's `id` |
+| R0-S15 | Functional Requirements section contains at least one H3 subheading grouping requirements by functional area |
 
 ### Ring 1 — Semantic Consistency
 
