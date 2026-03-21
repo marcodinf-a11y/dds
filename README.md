@@ -109,4 +109,4 @@ See [docs/05-agent-guide.md](docs/05-agent-guide.md) for full setup instructions
 
 ## License
 
-TBD
+[MIT](LICENSE)
