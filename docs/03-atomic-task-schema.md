@@ -44,7 +44,7 @@ Generate with: `openssl rand -hex 4`
   "title": "AtomicTaskDefinition",
   "type": "object",
   "required": [
-    "id", "parent", "description", "blocked_by", "blocks",
+    "id", "parent", "description_file", "blocked_by", "blocks",
     "scope", "acceptance_criteria", "context_refs"
   ],
   "additionalProperties": false,
@@ -59,7 +59,7 @@ Generate with: `openssl rand -hex 4`
       "pattern": "^impl-[0-9a-f]{8}$",
       "description": "ID of the implementation document this task was decomposed from."
     },
-    "description": {
+    "description_file": {
       "type": "string",
       "pattern": "^at-[0-9a-f]{8}\\.md$",
       "description": "Filename of the markdown description document for this task."
@@ -95,7 +95,7 @@ Generate with: `openssl rand -hex 4`
           "type": "array",
           "items": { "type": "string" },
           "minItems": 1,
-          "description": "Logical modules this task operates within. Must be a subset of the parent impl doc's modules."
+          "description": "Logical modules this task operates within. Must be a subset of the parent impl doc's modules. For transitive dependencies (e.g., shared type modules), include the module if the task directly depends on it. See CL-T03 for the cross-task coverage requirement."
         }
       },
       "description": "Enforced scope boundary."
@@ -192,6 +192,16 @@ Generate with: `openssl rand -hex 4`
 
 Types `test`, `build`, and `lint` are **machine-verifiable** — the harness runs the `verify` command and checks exit code 0. Type `review` requires an **LLM judgment call** using the `rubric` as the evaluation prompt.
 
+### NFR-Derived Acceptance Criteria
+
+When an implementation document adopts a spec-level NFR as a REQ-XX entry (see Implementation Doc Schema § NFR Propagation), the atomic tasks implementing that requirement must include acceptance criteria that verify the non-functional property. Use the criterion type that best fits:
+
+- **Performance thresholds** → `test` criterion with a benchmark command (e.g., `verify: "dotnet test --filter Perf_PollingCpuUsage"`)
+- **Architectural constraints** → `lint` criterion with a static analysis rule (e.g., `verify: "dotnet test LTOS.ArchTests --filter NoDirectSoapCalls"`)
+- **Quality attributes** that resist automation → `review` criterion with a specific rubric referencing the measurable threshold from the NFR
+
+If an NFR cannot be verified at the atomic task level (e.g., "support 4 concurrent devices" requires integration testing), the task's Execution Constraints section must note this and reference the NFR. The acceptance criterion should verify the task's contribution to the NFR (e.g., "no shared mutable state between test cycles").
+
 ### Dependency Symmetry Invariant
 
 The `blocks` and `blocked_by` fields are redundant by design — both directions are stored for fast local lookup. This creates an invariant that Ring 0 enforces:
@@ -206,7 +216,7 @@ If task `at-a1b2c3d4` declares `"blocks": ["at-e9f1a3b5"]`, then `at-e9f1a3b5` M
 {
   "id": "at-a1b2c3d4",
   "parent": "impl-c9d2f4a1",
-  "description": "at-a1b2c3d4.md",
+  "description_file": "at-a1b2c3d4.md",
   "blocked_by": ["at-7f3e2a19", "at-b4c8d6e2"],
   "blocks": ["at-e9f1a3b5"],
   "scope": {
@@ -301,10 +311,10 @@ Steps should be concrete enough that the agent is not making
 architectural decisions. "Add a method to X that does Y by calling Z"
 is good. "Implement error handling" is too vague.
 
-## Constraints
+## Execution Constraints
 
 What the agent must NOT do. Each constraint is a single, verifiable
-statement. Constraints are checked during review.
+statement. Execution constraints are checked during review.
 
 Examples:
 - Do not modify the public API of {class}.
@@ -372,7 +382,7 @@ types and SOAP types.
 8. Catch SoapException and return `Result.Failure(ex.Message)`.
 9. Catch TimeoutException and return `Result.Failure("Device communication timeout")`.
 
-## Constraints
+## Execution Constraints
 
 - Do not modify the ILTOSClient interface.
 - Do not add new public methods beyond RunTest.
@@ -510,7 +520,7 @@ types and SOAP types.
 | R0-01 | JSON validates against AtomicTaskDefinition schema |
 | R0-02 | `id` is unique across all task definitions |
 | R0-03 | `parent` references an existing implementation document |
-| R0-04 | `description` file exists and is a valid markdown file |
+| R0-04 | `description_file` file exists and is a valid markdown file |
 | R0-05 | All IDs in `blocked_by` reference existing task definitions |
 | R0-06 | All IDs in `blocks` reference existing task definitions |
 | R0-07 | **Dependency symmetry invariant:** for every task B in `blocks`, B.`blocked_by` contains this task's ID, and vice versa |
@@ -527,7 +537,7 @@ types and SOAP types.
 | Rule | Check |
 |---|---|
 | R0-20 | File starts with H1 matching pattern `# {at-id}: {title}` |
-| R0-21 | Contains exactly five H2 sections: Objective, Context, Approach, Constraints, References |
+| R0-21 | Contains exactly five H2 sections: Objective, Context, Approach, Execution Constraints, References |
 | R0-22 | H2 sections appear in the required order |
 | R0-23 | No H2 section is empty |
 | R0-24 | H1 task-id matches the JSON definition's `id` |
@@ -566,11 +576,11 @@ Check: Do any sibling atomic tasks make contradictory assumptions?
 Documents provided:
 - Sibling atomic task descriptions (same parent): {task_descriptions}
 
-Question: Compare the Context, Approach, and Constraints sections
+Question: Compare the Context, Approach, and Execution Constraints sections
 across all sibling tasks. Find any case where:
 (a) two tasks modify the same method or class in incompatible ways,
 (b) one task's Approach assumes something that another task's
-    Constraints forbid, or
+    Execution Constraints forbid, or
 (c) two tasks make different assumptions about the same interface.
 
 Report each contradiction with references to both tasks.
@@ -697,10 +707,10 @@ Rules:
 - Generate a fresh task ID and fresh acceptance criterion IDs using
   8 random hex chars each.
 - Set parent to the implementation document's ID.
-- Follow the implementation doc's Decomposition Notes:
+- Follow the implementation doc's Task Decomposition Notes:
   - Use the Suggested Task Boundaries as a starting point.
   - Respect the Ordering Rationale for blocked_by/blocks.
-  - Follow the Decomposition Constraints.
+  - Follow the Decomposition Rules.
 - IMPORTANT: Maintain dependency symmetry. If task A blocks task B,
   then A.blocks must contain B's ID AND B.blocked_by must contain
   A's ID.
