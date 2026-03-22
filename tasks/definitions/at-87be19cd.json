@@ -1,0 +1,31 @@
+{
+  "id": "at-87be19cd",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-87be19cd.md",
+  "blocked_by": ["at-ce9fa326"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "src/validators/task/ring1.ts",
+      "src/validators/task/ring2.ts"
+    ],
+    "modules": ["task-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-6b59c7bf",
+      "type": "build",
+      "description": "Ring 1 and Ring 2 prompt template modules compile without errors",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-696b8feb",
+      "type": "review",
+      "description": "Ring 1 exports four prompt-building functions (R1-T01 through R1-T04) and Ring 2 exports five prompt-building functions (R2-T01 through R2-T05) matching the templates in docs/03-atomic-task-schema.md",
+      "rubric": "Verify: (1) ring1.ts exports functions for R1-T01 coverageCompleteness, R1-T02 contradictionDetection, R1-T03 scopeCoherence, R1-T04 dependencyCorrectness. Each takes document content and context parameters and returns a prompt string. (2) ring2.ts exports functions for R2-T01 actionability, R2-T02 scopeBoundedness, R2-T03 approachSpecificity, R2-T04 constraintTestability, R2-T05 criterionCompleteness. Each takes document content and returns a prompt string. (3) Each prompt asks exactly one question and specifies structured JSON output. (4) Prompt content matches the canonical templates from docs/03-atomic-task-schema.md. PASS if all match. FAIL if any missing or divergent."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#atomic-tasks"
+  ]
+}

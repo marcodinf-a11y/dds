@@ -1,0 +1,40 @@
+{
+  "id": "at-0b9f2dab",
+  "parent": "impl-7e2a9f1b",
+  "description": "at-0b9f2dab.md",
+  "blocked_by": ["at-73d6ad76", "at-934f341f", "at-17bc59d3"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "tests/unit/ring0/spec-validator.test.ts",
+      "tests/unit/ring0/cross-level.test.ts",
+      "tests/fixtures/specs/valid-spec.json",
+      "tests/fixtures/specs/valid-spec.md"
+    ],
+    "modules": ["spec-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-6eb363b1",
+      "type": "build",
+      "description": "TypeScript compiles with no errors including test files",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-e6651eaa",
+      "type": "test",
+      "description": "All Ring 0 spec validator and cross-level validator tests pass",
+      "verify": "npx vitest run tests/unit/ring0/"
+    },
+    {
+      "id": "ac-e3c84cd4",
+      "type": "review",
+      "description": "Tests provide comprehensive coverage of all R0-S and CL-S rules",
+      "rubric": "Verify: (1) spec-validator.test.ts has at least one test per R0-S rule (R0-S01 through R0-S14), testing both the passing and failing case. (2) cross-level.test.ts has at least one test per CL-S rule (CL-S01 through CL-S04), testing both passing and failing cases. (3) Fixtures in tests/fixtures/specs/ include a valid spec (JSON + Markdown) and the tests construct invalid variants programmatically or via fixture mutation. (4) Tests use vitest (describe/it/expect). (5) No tests depend on external services or file system reads at runtime — all data is inline or from fixture imports. PASS if all five hold. FAIL if any rule lacks both a positive and negative test case."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#specification-documents",
+    "spec-fa3a90b8#cross-level-invariants"
+  ]
+}

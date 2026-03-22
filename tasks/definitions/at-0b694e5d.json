@@ -1,0 +1,32 @@
+{
+  "id": "at-0b694e5d",
+  "parent": "impl-5a0e3d8f",
+  "description": "at-0b694e5d.md",
+  "blocked_by": ["at-353cb055"],
+  "blocks": ["at-e6ef2a88"],
+  "scope": {
+    "files": [
+      "src/pipeline/orchestrate.ts"
+    ],
+    "modules": ["pipeline", "decomposition"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-ff17dc7a",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding orchestrate.ts",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-823f2b10",
+      "type": "review",
+      "description": "runPipeline implements four sequential phases with halting on escalation, and onSpecChange implements version increment with downstream invalidation",
+      "rubric": "Verify: (1) orchestrate.ts exports runPipeline(specId, config?, existingImplDocs?) implementing four phases: Phase 1 — validate spec via refine(); Phase 2 — decompose spec into impl docs via LLM generation prompt, validate each via refine(); Phase 3 — decompose each impl doc into tasks via LLM generation prompt, validate each via refine(), check cross-task invariants; Phase 4 — run all cross-level invariants (CL-S01 through CL-S04, CL-T01 through CL-T05, CL-F01, CL-F02). (2) Pipeline halts at any phase where escalation occurs per REQ-13. (3) Decomposition calls per-level generation prompt functions from Impl Docs 1/2/3 via claude-cli. (4) After successful decomposition and validation, parent document's JSON is updated with child references and status set to 'decomposed' per REQ-19. (5) onSpecChange(specId) increments version, reverts downstream impl docs to 'draft', sets pending/running execution records to 'abandoned', and passes existing impl docs for incremental re-decomposition per REQ-14. (6) existingImplDocs parameter enables incremental adjustment rather than full regeneration. PASS if all six hold; FAIL if any is missing."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#pipeline-orchestration",
+    "spec-fa3a90b8#document-decomposition",
+    "spec-fa3a90b8#cross-level-invariants"
+  ]
+}

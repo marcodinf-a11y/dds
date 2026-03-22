@@ -1,0 +1,37 @@
+{
+  "id": "at-934f341f",
+  "parent": "impl-7e2a9f1b",
+  "description": "at-934f341f.md",
+  "blocked_by": ["at-e27804a5", "at-73d6ad76"],
+  "blocks": ["at-0b9f2dab"],
+  "scope": {
+    "files": [
+      "src/validators/spec/ring0.ts"
+    ],
+    "modules": ["spec-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-3d81bb4f",
+      "type": "build",
+      "description": "TypeScript compiles with no errors including the Ring 0 validator",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-cad1af64",
+      "type": "review",
+      "description": "Validator implements all 14 R0-S rules as a pure function",
+      "rubric": "Verify: (1) validateSpecRing0 is exported as a named function taking (spec: SpecDefinition, markdown: string) and returning Ring0Result. (2) All 14 rules R0-S01 through R0-S14 are implemented as individual checks. (3) R0-S01 uses ajv to validate spec against the JSON Schema. (4) R0-S05 validates Markdown H1 matches spec id pattern. (5) R0-S06 through R0-S10 check the six H2 sections exist, are in order, and are non-empty. (6) R0-S12 checks at least one FR-XX entry exists. (7) R0-S13 checks uniqueness of FR-XX and NFR-XX identifiers. (8) Function is pure — no file I/O, no side effects. PASS if all eight hold. FAIL if any rule is missing or function performs I/O."
+    },
+    {
+      "id": "ac-14b1ccb7",
+      "type": "review",
+      "description": "ajv usage follows established pattern",
+      "rubric": "Verify: (1) ajv v8 is imported and used with Draft-07 support. (2) The JSON Schema is loaded and compiled once (not on every call) — either via module-level compilation or a cached compiled validator. (3) No other JSON Schema library is used. PASS if all three hold. FAIL otherwise."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#specification-documents",
+    "spec-fa3a90b8#document-hierarchy-and-structure"
+  ]
+}

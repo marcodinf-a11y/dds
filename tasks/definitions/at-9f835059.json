@@ -1,0 +1,37 @@
+{
+  "id": "at-9f835059",
+  "parent": "impl-3c8d5e0a",
+  "description": "at-9f835059.md",
+  "blocked_by": ["at-3a0e5e9c"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "src/validators/impl/ring1.ts",
+      "src/validators/impl/ring2.ts"
+    ],
+    "modules": ["impl-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-714bea49",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding Ring 1 and Ring 2 prompt templates",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-d8d22bc4",
+      "type": "review",
+      "description": "Ring 1 prompt templates cover all six semantic checks R1-I10 through R1-I15",
+      "rubric": "Verify that ring1.ts exports six prompt-building functions for R1-I10 (spec coverage), R1-I11 (out-of-scope consistency), R1-I12 (design decision coherence), R1-I13 (dependency completeness), R1-I14 (decomposition coverage, conditional on decomposed status), R1-I15 (cross-implementation contradiction). Each function must take (documentContent: string, additionalContext?: string) and return a string. Each prompt must ask exactly one question and instruct the LLM to return JSON with check, verdict, and issues fields. Verdict: PASS if all six are present with correct signatures and output format instructions; FAIL otherwise."
+    },
+    {
+      "id": "ac-4f5061cb",
+      "type": "review",
+      "description": "Ring 2 prompt templates cover all six quality rubrics R2-I10 through R2-I15",
+      "rubric": "Verify that ring2.ts exports six prompt-building functions for R2-I10 (decomposability), R2-I11 (requirement testability), R2-I12 (background sufficiency), R2-I13 (design decision completeness), R2-I14 (boundary clarity), R2-I15 (decomposition notes quality). Each function must take (documentContent: string, additionalContext?: string) and return a string. Each prompt must instruct the LLM to return JSON with check, dimension, verdict, evidence, and summary fields. Verdict: PASS if all six are present with correct signatures and output format instructions; FAIL otherwise."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#implementation-documents"
+  ]
+}

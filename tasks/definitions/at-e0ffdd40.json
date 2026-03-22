@@ -1,0 +1,32 @@
+{
+  "id": "at-e0ffdd40",
+  "parent": "impl-5a0e3d8f",
+  "description": "at-e0ffdd40.md",
+  "blocked_by": [],
+  "blocks": ["at-353cb055"],
+  "scope": {
+    "files": [
+      "src/pipeline/convergence.ts",
+      "src/pipeline/escalation.ts"
+    ],
+    "modules": ["escalation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-9440311b",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding convergence.ts and escalation.ts",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-cf45c393",
+      "type": "review",
+      "description": "Convergence detection implements correct set-overlap logic and escalation generates structured reports to the correct directory",
+      "rubric": "Verify: (1) convergence.ts exports checkConvergence(currentIssues, previousIssues, threshold) that compares sets of (rule, reference) pairs and returns true when overlap ratio exceeds threshold. (2) The overlap ratio is computed as |intersection| / |union| or |intersection| / |current| (document the chosen formula). (3) escalation.ts exports a function that generates an EscalationReport containing document_id, document_level, reason, iterations_completed, unresolved_issues, history, and document_snapshot (file path). (4) Escalation reports are written as structured JSON to pipeline/escalations/ directory. (5) The escalation function creates the output directory if it does not exist. PASS if all five hold; FAIL if any is missing."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#refinement-and-escalation",
+    "spec-fa3a90b8#non-functional-requirements"
+  ]
+}

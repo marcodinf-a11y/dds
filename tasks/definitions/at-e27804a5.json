@@ -1,0 +1,39 @@
+{
+  "id": "at-e27804a5",
+  "parent": "impl-7e2a9f1b",
+  "description": "at-e27804a5.md",
+  "blocked_by": [],
+  "blocks": ["at-73d6ad76", "at-934f341f", "at-b95ee0ad", "at-3971dcac", "at-17bc59d3"],
+  "scope": {
+    "files": [
+      "src/schemas/spec.schema.json",
+      "src/types/definitions.ts",
+      "src/types/results.ts"
+    ],
+    "modules": ["spec-schema"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-94fee701",
+      "type": "build",
+      "description": "TypeScript compiles with no errors for definitions.ts and results.ts",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-e7fe3c18",
+      "type": "build",
+      "description": "spec.schema.json is valid JSON and parseable",
+      "verify": "node -e \"JSON.parse(require('fs').readFileSync('src/schemas/spec.schema.json','utf8'))\""
+    },
+    {
+      "id": "ac-072dcb2f",
+      "type": "review",
+      "description": "Schema and types follow established conventions and match spec requirements",
+      "rubric": "Verify: (1) spec.schema.json uses Draft-07 and enforces id pattern spec-[0-9a-f]{8}, title as string, description matching spec-[0-9a-f]{8}\\.md, status enum [draft,validated,decomposed], version as integer, optional arrays implementation_docs and related_specs. (2) definitions.ts exports a SpecDefinition interface with fields matching the JSON Schema. (3) results.ts exports Ring0Result, Ring1Result, Ring2Result interfaces where Ring0Result contains an array of {rule:string, passed:boolean, message?:string}. (4) All files use PascalCase for interfaces, camelCase for functions, kebab-case filenames. PASS if all four hold. FAIL if any is missing or incorrect."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#document-hierarchy-and-structure",
+    "spec-fa3a90b8#specification-documents"
+  ]
+}

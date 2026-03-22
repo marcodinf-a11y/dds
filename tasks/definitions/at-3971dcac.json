@@ -1,0 +1,36 @@
+{
+  "id": "at-3971dcac",
+  "parent": "impl-7e2a9f1b",
+  "description": "at-3971dcac.md",
+  "blocked_by": ["at-e27804a5"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "src/validators/spec/generation.ts"
+    ],
+    "modules": ["spec-schema"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-c1d0423f",
+      "type": "build",
+      "description": "TypeScript compiles with no errors including the generation prompt module",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-8e462a4a",
+      "type": "review",
+      "description": "Generation prompts instruct the LLM to produce valid paired artifacts",
+      "rubric": "Verify: (1) A system prompt constant is exported that instructs the LLM to produce paired JSON definition + Markdown description conforming to the SpecificationDefinition schema and the six-section Markdown template. (2) A user prompt template function is exported that accepts human input and optional context parameters and returns a complete prompt string. (3) The system prompt references the spec ID pattern, required fields, status lifecycle, and all six H2 sections by name. (4) The user prompt embeds the human input in a clearly delimited section. PASS if all four hold. FAIL otherwise."
+    },
+    {
+      "id": "ac-20da0ac2",
+      "type": "review",
+      "description": "Module follows established conventions for prompt template exports",
+      "rubric": "Verify: (1) File is at src/validators/spec/generation.ts. (2) Uses named exports. (3) No LLM calls or I/O. (4) camelCase function names, UPPER_SNAKE_CASE for the system prompt constant. PASS if all four hold. FAIL otherwise."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#specification-documents"
+  ]
+}

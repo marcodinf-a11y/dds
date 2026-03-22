@@ -1,0 +1,37 @@
+{
+  "id": "at-b95ee0ad",
+  "parent": "impl-7e2a9f1b",
+  "description": "at-b95ee0ad.md",
+  "blocked_by": ["at-e27804a5"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "src/validators/spec/ring1.ts",
+      "src/validators/spec/ring2.ts"
+    ],
+    "modules": ["spec-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-f879985a",
+      "type": "build",
+      "description": "TypeScript compiles with no errors including Ring 1 and Ring 2 prompt templates",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-832d265b",
+      "type": "review",
+      "description": "Ring 1 prompt templates cover all four semantic checks with correct structure",
+      "rubric": "Verify: (1) ring1.ts exports four functions for R1-S01 (terminology consistency), R1-S02 (requirement atomicity), R1-S03 (cross-spec consistency), R1-S04 (decomposition guidance coverage). (2) Each function accepts document content as parameters and returns a complete prompt string. (3) Each prompt asks exactly one question and specifies structured JSON output with check, verdict, and issues fields. (4) R1-S03 prompt handles the conditional case of empty related_specs. (5) Functions are pure — no LLM calls, no I/O. PASS if all five hold. FAIL otherwise."
+    },
+    {
+      "id": "ac-eabebc5f",
+      "type": "review",
+      "description": "Ring 2 prompt templates cover all three quality rubrics with correct structure",
+      "rubric": "Verify: (1) ring2.ts exports three functions for R2-S01 (decomposition readiness), R2-S02 (requirement precision), R2-S03 (completeness). (2) Each function accepts document content as parameters and returns a complete prompt string. (3) Each prompt specifies structured JSON output with check, dimension, verdict, evidence, and summary fields. (4) Functions are pure — no LLM calls, no I/O. PASS if all four hold. FAIL otherwise."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#specification-documents"
+  ]
+}

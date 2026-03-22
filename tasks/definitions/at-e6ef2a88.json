@@ -1,0 +1,42 @@
+{
+  "id": "at-e6ef2a88",
+  "parent": "impl-5a0e3d8f",
+  "description": "at-e6ef2a88.md",
+  "blocked_by": ["at-0b694e5d"],
+  "blocks": ["at-639f101c"],
+  "scope": {
+    "files": [
+      "src/cli/run-pipeline.ts",
+      "src/cli/validate-spec.ts",
+      "src/cli/validate-impl.ts",
+      "src/cli/validate-task.ts",
+      "src/cli/validate-cross.ts"
+    ],
+    "modules": ["pipeline", "reporting"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-971d3281",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding all CLI entry points and report module",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-1de7d557",
+      "type": "review",
+      "description": "CLI entry points are thin wrappers that parse arguments, load config, delegate to library functions, and exit with appropriate codes",
+      "rubric": "Verify: (1) run-pipeline.ts parses a spec-id argument, loads config from pipeline/config.json (optional), calls runPipeline(), writes a summary report via report.ts, exits 0 on success or 1 on failure/escalation. (2) validate-spec.ts, validate-impl.ts, validate-task.ts each parse a document ID argument, call the appropriate per-level Ring 0 validator, and exit with 0/1 based on pass/fail — suitable for PostToolUse hooks. (3) validate-cross.ts parses a root spec ID, runs all cross-level invariant validators, and reports results. (4) refine.ts (src/cli/refine.ts) parses a document ID and level, calls refine(), reports promoted/escalated. (5) scope-guard.ts accepts a file path and task ID, checks if the file is within the task's scope.files, exits 0 if allowed or 1 if blocked — suitable for PreToolUse hook. (6) report.ts exports a function that generates a summary JSON report to pipeline/reports/ containing run ID, root spec ID, timestamps, overall status, per-document results, and aggregate statistics (documents validated, cross-level checks, LLM calls, token usage, iterations, escalations) per REQ-16. PASS if all six hold; FAIL if any is missing."
+    },
+    {
+      "id": "ac-37a8e34a",
+      "type": "review",
+      "description": "All CLI entry points follow consistent patterns: argument parsing, config loading, error handling, and exit codes",
+      "rubric": "Verify: (1) All CLI files use process.argv for argument parsing (no external CLI framework required). (2) All wrap their main logic in a try/catch that prints errors to stderr and exits with code 1. (3) All use consistent naming: kebab-case files, camelCase functions. (4) scope-guard.ts reads the task definition JSON to get scope.files and performs path matching. (5) Files that are thin wrappers (validate-*.ts, refine.ts) contain no business logic — only argument parsing, delegation, and output formatting. PASS if all five hold; FAIL if any is missing."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#pipeline-orchestration",
+    "spec-fa3a90b8#non-functional-requirements",
+    "spec-fa3a90b8#system-constraints"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "at-17bc59d3",
+  "parent": "impl-7e2a9f1b",
+  "description": "at-17bc59d3.md",
+  "blocked_by": ["at-e27804a5", "at-73d6ad76"],
+  "blocks": ["at-0b9f2dab"],
+  "scope": {
+    "files": [
+      "src/validators/cross-level/spec-impl.ts"
+    ],
+    "modules": ["spec-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-1a023a62",
+      "type": "build",
+      "description": "TypeScript compiles with no errors including the cross-level validator",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-1e94416c",
+      "type": "review",
+      "description": "All four CL-S invariants are implemented as deterministic checks",
+      "rubric": "Verify: (1) validateSpecImplCrossLevel is exported as a named function. (2) CL-S01 checks bidirectional consistency between spec.implementation_docs and each impl doc's spec_sections. (3) CL-S02 checks that decomposed specs have at least one impl doc. (4) CL-S03 checks that the union of all impl docs' spec_sections covers every H3 heading under Functional Requirements. (5) CL-S04 checks version/status consistency — if spec version incremented, all downstream impl docs must be draft. (6) Function is pure — no I/O, no LLM calls. (7) Returns Ring0Result. PASS if all seven hold. FAIL if any invariant is missing or function is impure."
+    },
+    {
+      "id": "ac-da572058",
+      "type": "review",
+      "description": "Function signature accepts all required data without file I/O",
+      "rubric": "Verify: (1) Function takes spec definitions, impl doc definitions, and spec markdown as parameters — all data needed is passed in. (2) Uses extractHeadings from src/parsers/markdown.ts for H3 extraction. (3) Does not import fs, path, or any I/O module. PASS if all three hold. FAIL otherwise."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#cross-level-invariants"
+  ]
+}

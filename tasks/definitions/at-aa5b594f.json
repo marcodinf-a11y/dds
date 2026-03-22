@@ -1,0 +1,37 @@
+{
+  "id": "at-aa5b594f",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-aa5b594f.md",
+  "blocked_by": ["at-ce9fa326"],
+  "blocks": ["at-7149508d"],
+  "scope": {
+    "files": [
+      "src/validators/task/ring0.ts"
+    ],
+    "modules": ["task-validation", "execution-records"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-0924f1ed",
+      "type": "build",
+      "description": "Ring 0 validator module compiles without errors",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-844be556",
+      "type": "review",
+      "description": "validateTaskRing0() implements all R0-T01 through R0-T14 and R0-T20 through R0-T24 rules; validateExecutionRecord() implements R0-T30 through R0-T34",
+      "rubric": "Verify: (1) validateTaskRing0(task, markdown, context) is exported and returns Ring0Result. It checks: R0-T01 schema validation via ajv, R0-T02 ID uniqueness via context, R0-T03 parent reference validity, R0-T04 description file existence, R0-T05/R0-T06 dependency reference validity, R0-T07 dependency symmetry using TaskValidationContext.siblingTasks, R0-T08 acyclicity via graph utilities from src/parsers/graph.ts, R0-T09 acceptance_criteria ID uniqueness, R0-T10 test/build/lint have verify field, R0-T11 review has rubric field, R0-T12 scope.files non-empty, R0-T13 context_refs non-empty, R0-T14 no self-references in blocked_by/blocks, R0-T20 H1 matches pattern, R0-T21 exactly 5 H2 sections, R0-T22 H2 order, R0-T23 no empty H2, R0-T24 H1 id matches JSON id. (2) validateExecutionRecord(record, context) is exported covering R0-T30 schema conformance, R0-T31 task_id reference, R0-T32 sequential run numbers, R0-T33 criterion_id reference, R0-T34 no duplicate criterion_ids. (3) Both functions are pure functions with no side effects. PASS if all rules implemented. FAIL if any missing."
+    },
+    {
+      "id": "ac-a96c2cb2",
+      "type": "review",
+      "description": "Validator follows established patterns from impl-7e2a9f1b and impl-3c8d5e0a Ring 0 validators",
+      "rubric": "Verify: (1) Uses ajv for JSON Schema validation (same setup pattern as spec and impl doc validators). (2) Uses shared heading extractor from src/parsers/markdown.ts for Markdown checks. (3) Uses graph utilities from src/parsers/graph.ts for acyclicity check. (4) Returns Ring0Result with per-rule pass/fail entries. (5) TaskValidationContext and ExecutionRecordContext interfaces are defined with appropriate fields. PASS if patterns are consistent. FAIL if divergent approaches used."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#atomic-tasks",
+    "spec-fa3a90b8#acceptance-criteria-and-execution"
+  ]
+}

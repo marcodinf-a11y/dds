@@ -1,0 +1,30 @@
+{
+  "id": "at-72a660c7",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-72a660c7.md",
+  "blocked_by": ["at-ce9fa326"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "src/validators/task/generation.ts"
+    ],
+    "modules": ["task-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-c7c9db3e",
+      "type": "build",
+      "description": "Generation prompt template module compiles without errors",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-721b93d0",
+      "type": "review",
+      "description": "Generation prompt exports match the system prompt and user prompt template from docs/03-atomic-task-schema.md",
+      "rubric": "Verify: (1) generation.ts exports a function that builds the system prompt for atomic task generation matching the canonical system prompt from docs/03-atomic-task-schema.md (covering rules for ID generation, dependency symmetry, scope exhaustiveness, criterion types, approach specificity, context_refs tracing, 3-8 tasks target, execution order). (2) Exports a function that builds the user prompt template accepting impl_json, impl_markdown, spec_sections_content, codebase_context, build_command, test_command, lint_command parameters. (3) The system prompt includes all rules from the canonical template. (4) Functions are typed with TaskDefinition and ImplDefinition types from src/types/definitions.ts. PASS if all match. FAIL if any missing rule or parameter."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#atomic-tasks"
+  ]
+}

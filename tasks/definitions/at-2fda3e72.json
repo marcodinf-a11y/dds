@@ -1,0 +1,31 @@
+{
+  "id": "at-2fda3e72",
+  "parent": "impl-5a0e3d8f",
+  "description": "at-2fda3e72.md",
+  "blocked_by": ["at-08d20126"],
+  "blocks": ["at-353cb055"],
+  "scope": {
+    "files": [
+      "src/llm/fix.ts"
+    ],
+    "modules": ["pipeline"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-41d40738",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding fix.ts",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-80741407",
+      "type": "review",
+      "description": "fix.ts exports fixStructural, fixSemantic, and fixQuality with inline prompt templates that invoke claude-cli and return revised document content",
+      "rubric": "Verify: (1) fix.ts exports three functions: fixStructural(), fixSemantic(), fixQuality(). (2) Each function accepts a document (content string or path) and failure details (array of issues from the corresponding ring). (3) fixStructural handles Ring 0 failures — deterministic fixes where possible, LLM-based for non-trivial issues. (4) fixSemantic handles Ring 1 failures — invokes claude-cli with a prompt that includes the parent document for alignment. (5) fixQuality handles Ring 2 failures — invokes claude-cli with a prompt requesting minimum changes to pass the rubric. (6) Fix prompt templates are defined inline in fix.ts (not imported from per-level modules). (7) Each function returns the revised document content as a string. PASS if all seven hold; FAIL if any is missing."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#refinement-and-escalation",
+    "spec-fa3a90b8#validation-rings"
+  ]
+}

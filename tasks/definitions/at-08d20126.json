@@ -1,0 +1,39 @@
+{
+  "id": "at-08d20126",
+  "parent": "impl-5a0e3d8f",
+  "description": "at-08d20126.md",
+  "blocked_by": [],
+  "blocks": ["at-d5c5627d", "at-2fda3e72"],
+  "scope": {
+    "files": [
+      "src/llm/claude-cli.ts",
+      "src/schemas/pipeline-config.schema.json",
+      "pipeline/config.json"
+    ],
+    "modules": ["pipeline"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-219eb5d0",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding claude-cli.ts",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-d0c8cb1e",
+      "type": "build",
+      "description": "pipeline-config.schema.json is valid JSON and parseable; pipeline/config.json validates against it",
+      "verify": "node -e \"const Ajv = require('ajv'); const ajv = new Ajv(); const schema = JSON.parse(require('fs').readFileSync('src/schemas/pipeline-config.schema.json','utf8')); const config = JSON.parse(require('fs').readFileSync('pipeline/config.json','utf8')); const valid = ajv.validate(schema, config); if (!valid) { console.error(ajv.errors); process.exit(1); }\""
+    },
+    {
+      "id": "ac-7bf8dc59",
+      "type": "review",
+      "description": "claude-cli.ts implements execSync invocation with correct flags, timeout handling, retry logic, inter-call delay, and ajv double-validation",
+      "rubric": "Verify: (1) claude-cli.ts exports a function that invokes `claude -p` via child_process.execSync with flags --output-format json, --json-schema, and --max-turns. (2) Short 429 handling: retries with exponential backoff up to max_retries_on_short_429 (default 3) with backoff_multiplier (default 2) when retry-after <= 60s. (3) Long 429 handling: aborts immediately when retry-after > 60s. (4) Inter-call delay of delay_between_calls_ms (default 2000ms) enforced between consecutive calls. (5) Returned JSON is parsed and validated with ajv against the provided schema. (6) All config values have compiled-in defaults and are optionally overridden from pipeline/config.json. (7) pipeline-config.schema.json uses Draft-07 with all fields optional, covering refinement.max_iterations, refinement.convergence_threshold, timeouts.ring1_check_seconds, timeouts.ring2_check_seconds, timeouts.fix_call_seconds, claude_cli.max_retries_on_short_429, claude_cli.backoff_multiplier, claude_cli.delay_between_calls_ms. PASS if all seven hold; FAIL if any is missing."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#system-constraints",
+    "spec-fa3a90b8#non-functional-requirements"
+  ]
+}

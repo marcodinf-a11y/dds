@@ -10,7 +10,7 @@
     "spec-fa3a90b8#system-constraints"
   ],
   "description": "impl-5a0e3d8f.md",
-  "atomic_tasks": [],
+  "atomic_tasks": ["at-08d20126", "at-d5c5627d", "at-2fda3e72", "at-e0ffdd40", "at-353cb055", "at-0b694e5d", "at-e6ef2a88", "at-639f101c"],
   "modules": ["pipeline", "refinement", "escalation", "decomposition", "reporting"],
   "dependencies": ["impl-7e2a9f1b", "impl-3c8d5e0a", "impl-9f4b1c7d"],
   "status": "draft"

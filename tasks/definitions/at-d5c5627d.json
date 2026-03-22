@@ -1,0 +1,38 @@
+{
+  "id": "at-d5c5627d",
+  "parent": "impl-5a0e3d8f",
+  "description": "at-d5c5627d.md",
+  "blocked_by": ["at-08d20126"],
+  "blocks": ["at-353cb055"],
+  "scope": {
+    "files": [
+      "src/llm/ring1.ts",
+      "src/llm/ring2.ts"
+    ],
+    "modules": ["pipeline"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-dd928278",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding ring1.ts and ring2.ts",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-b725ce10",
+      "type": "review",
+      "description": "Ring 1 runner prepends shared system prompt, dispatches to per-level prompt templates, invokes claude-cli, and returns parsed Ring1Result",
+      "rubric": "Verify: (1) ring1.ts exports a function that accepts a rule ID, document content, and document level. (2) It dispatches to the correct per-level Ring 1 prompt template function based on document level (spec, impl, task). (3) The shared Ring 1 system prompt is defined as a constant and prepended to the per-level prompt. (4) It invokes the claude-cli wrapper with the combined prompt and the Ring1Result JSON schema. (5) The returned object conforms to Ring1Result (check, verdict, issues). PASS if all five hold; FAIL if any is missing."
+    },
+    {
+      "id": "ac-47e5c073",
+      "type": "review",
+      "description": "Ring 2 runner follows the same pattern as Ring 1 but with Ring 2 system prompt and Ring2Result schema",
+      "rubric": "Verify: (1) ring2.ts exports a function that accepts a rule ID, document content, and document level. (2) It dispatches to the correct per-level Ring 2 prompt template function based on document level. (3) The shared Ring 2 system prompt is defined as a constant and prepended to the per-level prompt. (4) It invokes the claude-cli wrapper with the combined prompt and the Ring2Result JSON schema. (5) The returned object conforms to Ring2Result (check, dimension, verdict, evidence, summary). PASS if all five hold; FAIL if any is missing."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#validation-rings",
+    "spec-fa3a90b8#non-functional-requirements"
+  ]
+}

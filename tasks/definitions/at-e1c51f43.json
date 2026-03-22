@@ -1,0 +1,36 @@
+{
+  "id": "at-e1c51f43",
+  "parent": "impl-3c8d5e0a",
+  "description": "at-e1c51f43.md",
+  "blocked_by": ["at-3a0e5e9c", "at-9d55dbbd"],
+  "blocks": ["at-3a7815aa"],
+  "scope": {
+    "files": [
+      "src/validators/impl/ring0.ts"
+    ],
+    "modules": ["impl-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-672da102",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding the Ring 0 validator",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-1f78b6fd",
+      "type": "review",
+      "description": "Validator is a pure function following the (definition, markdown, context) -> Ring0Result pattern from impl-7e2a9f1b",
+      "rubric": "Verify that ring0.ts exports validateImplRing0(impl: ImplDefinition, markdown: string, context: ImplValidationContext): Ring0Result as a pure function with no file I/O or side effects. Verify ImplValidationContext is defined as a typed interface containing existingImplIds (string[]), taskDefinitions (for R0-I50/R0-I51), and the full dependency graph (for R0-I47). Verdict: PASS if the function is pure, context is well-typed, and signature matches the pattern; FAIL otherwise."
+    },
+    {
+      "id": "ac-45f8c48e",
+      "type": "review",
+      "description": "All 18 Ring 0 rules (R0-I40 through R0-I51, R0-I60 through R0-I67) are implemented with correct logic",
+      "rubric": "Verify that ring0.ts implements all 18 rules: R0-I40 (JSON Schema validation via ajv), R0-I41 (ID uniqueness via context), R0-I42 (description file pattern), R0-I43 (spec_sections format regex), R0-I44 (atomic_tasks reference validity), R0-I45 (dependencies reference validity), R0-I46 (no self-references in dependencies), R0-I47 (dependency graph acyclicity via detectCycles from graph.ts), R0-I48 (status-array consistency), R0-I49 (reserved), R0-I50 (parent consistency via context.taskDefinitions), R0-I51 (module containment via context.taskDefinitions), R0-I60 (H1 heading match), R0-I61 (7 H2 sections in order), R0-I62 (no empty H2 sections), R0-I63 (3 H3 subsections under Decomposition Notes), R0-I64 (H1 ID matches definition ID), R0-I65 (reserved), R0-I66 (at least one REQ-XX entry), R0-I67 (each REQ-XX has spec section reference). Each rule should produce a distinct check entry in the result. Verdict: PASS if all 18 rules are present and correctly implemented; FAIL if any are missing or logically incorrect."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#implementation-documents"
+  ]
+}

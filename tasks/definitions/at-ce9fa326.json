@@ -1,0 +1,40 @@
+{
+  "id": "at-ce9fa326",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-ce9fa326.md",
+  "blocked_by": [],
+  "blocks": ["at-aa5b594f", "at-87be19cd", "at-72a660c7", "at-9958228c"],
+  "scope": {
+    "files": [
+      "src/schemas/task.schema.json",
+      "src/schemas/execution-record.schema.json",
+      "src/types/definitions.ts"
+    ],
+    "modules": ["task-schema", "execution-records"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-4c5d3424",
+      "type": "build",
+      "description": "All TypeScript types compile without errors",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-01aa7449",
+      "type": "review",
+      "description": "JSON Schemas match the canonical schemas from docs/03-atomic-task-schema.md and TypeScript types are consistent with JSON Schema definitions",
+      "rubric": "Verify: (1) task.schema.json matches the AtomicTaskDefinition schema from docs/03-atomic-task-schema.md including the oneOf discriminator for AcceptanceCriterion with all four criterion types (test, build, lint, review). (2) execution-record.schema.json matches the ExecutionRecord schema from docs/03-atomic-task-schema.md including CriterionResult definition. (3) definitions.ts exports TaskDefinition, AcceptanceCriterion (discriminated union on type field), ExecutionRecord, and CriterionResult interfaces that mirror the JSON Schema structures. (4) AcceptanceCriterion uses a TypeScript discriminated union with test/build/lint having verify field and review having rubric field. PASS if all four hold. FAIL if any divergence."
+    },
+    {
+      "id": "ac-bf265874",
+      "type": "review",
+      "description": "Naming conventions and patterns follow impl-7e2a9f1b and impl-3c8d5e0a established patterns",
+      "rubric": "Verify: (1) File names are kebab-case. (2) Interfaces/types are PascalCase. (3) The definitions.ts file adds to existing SpecDefinition and ImplDefinition types without modifying them. (4) JSON Schema files use Draft-07 ($schema field). (5) scope object has required files and modules arrays. PASS if all conventions match. FAIL if any deviation."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#document-hierarchy-and-structure",
+    "spec-fa3a90b8#atomic-tasks",
+    "spec-fa3a90b8#acceptance-criteria-and-execution"
+  ]
+}

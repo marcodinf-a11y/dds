@@ -1,0 +1,30 @@
+{
+  "id": "at-cc72052d",
+  "parent": "impl-3c8d5e0a",
+  "description": "at-cc72052d.md",
+  "blocked_by": ["at-3a0e5e9c"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "src/validators/impl/generation.ts"
+    ],
+    "modules": ["impl-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-64008ae8",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding generation prompt templates",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-6be374b4",
+      "type": "review",
+      "description": "Generation prompts define a system prompt and user prompt template that instruct the LLM to produce valid impl doc pairs",
+      "rubric": "Verify that generation.ts exports a system prompt (string constant or function) and a user prompt template function. The system prompt must instruct the LLM to decompose a spec into impl docs producing paired JSON definition and Markdown description artifacts. The user prompt template must accept parameters for impl_json, impl_markdown, spec_sections_content, codebase_context, build_command, test_command, and lint_command. Both must reference the ImplDefinition schema and the 7-H2-section Markdown template. Verdict: PASS if both prompts are present, correctly parameterized, and reference the schema/template; FAIL otherwise."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#implementation-documents"
+  ]
+}

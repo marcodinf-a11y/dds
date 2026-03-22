@@ -1,0 +1,39 @@
+{
+  "id": "at-639f101c",
+  "parent": "impl-5a0e3d8f",
+  "description": "at-639f101c.md",
+  "blocked_by": ["at-e6ef2a88"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "tests/unit/convergence.test.ts",
+      "tests/unit/pipeline-logic.test.ts"
+    ],
+    "modules": ["pipeline", "escalation", "refinement"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-ac5240f3",
+      "type": "build",
+      "description": "TypeScript compiles with no errors including test files",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-6618de84",
+      "type": "test",
+      "description": "All unit tests pass with mocked claude-cli boundary",
+      "verify": "npx vitest run tests/unit/convergence.test.ts tests/unit/pipeline-logic.test.ts"
+    },
+    {
+      "id": "ac-b84d3f9e",
+      "type": "review",
+      "description": "Tests cover convergence detection scenarios, refinement loop termination conditions, and orchestration phases with mocked LLM calls",
+      "rubric": "Verify: (1) convergence.test.ts tests checkConvergence with: identical issue sets (should converge), completely disjoint sets (should not converge), partial overlap at threshold boundary, empty previous issues (first iteration, should not converge), empty current issues (all fixed, should not converge). (2) pipeline-logic.test.ts mocks claude-cli.ts at the module boundary (not at the process level) to return predetermined responses. (3) pipeline-logic.test.ts tests refinement loop termination: promotion (all rings pass), convergence escalation (Ring 1 issues repeat), max-iteration escalation (Ring 0 keeps failing). (4) pipeline-logic.test.ts tests orchestration: four-phase happy path, phase halting on escalation. (5) No tests invoke the real claude CLI. PASS if all five hold; FAIL if any is missing."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#refinement-and-escalation",
+    "spec-fa3a90b8#pipeline-orchestration",
+    "spec-fa3a90b8#non-functional-requirements"
+  ]
+}

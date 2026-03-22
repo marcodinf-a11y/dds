@@ -1,0 +1,30 @@
+{
+  "id": "at-9d55dbbd",
+  "parent": "impl-3c8d5e0a",
+  "description": "at-9d55dbbd.md",
+  "blocked_by": ["at-3a0e5e9c"],
+  "blocks": ["at-e1c51f43", "at-5db529c8", "at-3a7815aa"],
+  "scope": {
+    "files": [
+      "src/parsers/graph.ts"
+    ],
+    "modules": ["impl-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-928cfa66",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding graph.ts",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-7e113ba8",
+      "type": "review",
+      "description": "Graph utilities are pure functions with no side effects, suitable for reuse by both impl-doc and atomic-task validators",
+      "rubric": "Verify that graph.ts exports buildAdjacencyList() and detectCycles() as pure functions with no file I/O, no mutable shared state, and generic enough signatures to work with any string-keyed dependency graph (not coupled to ImplDefinition or AtomicTaskDefinition). Verify functions are well-typed with explicit return types. Verdict: PASS if both functions are pure, generic, and reusable; FAIL if they contain side effects, are coupled to specific domain types, or lack explicit return types."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#implementation-documents"
+  ]
+}

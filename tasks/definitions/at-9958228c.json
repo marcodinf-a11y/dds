@@ -1,0 +1,36 @@
+{
+  "id": "at-9958228c",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-9958228c.md",
+  "blocked_by": ["at-ce9fa326"],
+  "blocks": ["at-7149508d"],
+  "scope": {
+    "files": [
+      "src/validators/cross-level/full-stack.ts"
+    ],
+    "modules": ["task-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-58d3466f",
+      "type": "build",
+      "description": "Full-stack traceability validator module compiles without errors",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-43c81a40",
+      "type": "review",
+      "description": "CL-F01 and CL-F02 correctly traverse spec -> impl doc -> task -> acceptance criterion chains",
+      "rubric": "Verify: (1) full-stack.ts exports validateFullStackTraceability() or equivalent function that checks both CL-F01 and CL-F02. (2) CL-F01 (top-down): for every spec FR-XX and NFR-XX, verifies a forward chain exists through at least one impl doc REQ-XX to at least one task acceptance criterion. (3) CL-F02 (bottom-up): for every task acceptance criterion, verifies a backward chain exists through the parent impl doc to at least one spec FR-XX or NFR-XX. (4) The function loads SpecDefinition, ImplDefinition, and TaskDefinition types from src/types/definitions.ts. (5) The check is purely structural (no LLM), deterministic, building forward/backward reference maps. (6) Returns results indicating which chains are broken. PASS if both invariants correctly implemented. FAIL if any chain direction missing or non-deterministic."
+    },
+    {
+      "id": "ac-b3fd93e3",
+      "type": "review",
+      "description": "Traceability validator uses context_refs and spec_sections for chain resolution",
+      "rubric": "Verify: (1) Chain resolution follows: spec FR-XX/NFR-XX -> impl doc REQ-XX (via from spec-XXXXXXXX#heading-slug annotation) -> task context_refs (spec-XXXXXXXX#heading-slug format) -> task acceptance_criteria. (2) The function accepts a context object containing all specs, impl docs, and tasks needed for traversal. (3) Does not hardcode any document IDs. PASS if chain resolution is correct. FAIL if any link in the chain is skipped or hardcoded."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#cross-level-invariants"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "at-7149508d",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-7149508d.md",
+  "blocked_by": ["at-aa5b594f", "at-9958228c"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "tests/unit/ring0/task-validator.test.ts",
+      "tests/fixtures/tasks/valid-task.json",
+      "tests/fixtures/tasks/valid-task.md",
+      "tests/fixtures/tasks/valid-execution-record.json",
+      "tests/fixtures/tasks/invalid/"
+    ],
+    "modules": ["task-validation", "execution-records"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-6586575e",
+      "type": "build",
+      "description": "Test file and fixtures compile without errors",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-97bb1f3c",
+      "type": "test",
+      "description": "All Ring 0 task validator tests pass",
+      "verify": "npx vitest run tests/unit/ring0/task-validator.test.ts"
+    },
+    {
+      "id": "ac-5bc95c97",
+      "type": "review",
+      "description": "Tests cover all R0-T rules, dependency symmetry edge cases, acyclicity, criterion type variants, execution record validation, and full-stack traceability",
+      "rubric": "Verify: (1) Tests cover every R0-T rule: R0-T01 through R0-T14, R0-T20 through R0-T24, R0-T30 through R0-T34. (2) Dependency symmetry tests include: valid symmetric pair, asymmetric blocks (A.blocks has B but B.blocked_by missing A), asymmetric blocked_by, multiple dependencies. (3) Acyclicity tests include: valid DAG, direct cycle (A->B->A), transitive cycle (A->B->C->A). (4) Criterion type tests include: valid test/build/lint with verify, valid review with rubric, test criterion missing verify, review criterion missing rubric. (5) Execution record tests include: valid record, invalid task_id, non-sequential run numbers, invalid criterion_id, duplicate criterion_ids. (6) Full-stack traceability tests include: complete chain, broken forward chain (CL-F01), orphan criterion (CL-F02). (7) Fixtures in tests/fixtures/tasks/ include valid and invalid examples. PASS if all rule categories covered. FAIL if any rule untested."
+    },
+    {
+      "id": "ac-b9e94273",
+      "type": "review",
+      "description": "Test structure follows vitest patterns with describe/it blocks organized by rule groups",
+      "rubric": "Verify: (1) Tests use vitest describe/it/expect. (2) Tests are organized into describe blocks by rule groups (e.g., 'R0-T01-T14 Task Definition', 'R0-T20-T24 Markdown', 'R0-T30-T34 Execution Record', 'CL-F01/CL-F02 Full-Stack Traceability'). (3) Each test has a descriptive name referencing the rule it validates. (4) Fixtures are loaded from tests/fixtures/tasks/ not inlined as large objects. PASS if structure is clean. FAIL if disorganized or fixtures inlined."
+    },
+    {
+      "id": "ac-76871182",
+      "type": "review",
+      "description": "Fixture files cover both valid and invalid scenarios with clear naming",
+      "rubric": "Verify: (1) tests/fixtures/tasks/ contains at least: valid-task.json, valid-task.md, valid-execution-record.json. (2) Invalid fixtures exist for: schema violation, missing parent, asymmetric dependencies, cyclic dependencies, duplicate criterion IDs, missing verify field, missing rubric field, bad markdown structure, invalid execution record. (3) Fixture filenames clearly indicate their purpose (e.g., asymmetric-deps.json, cyclic-deps.json). PASS if comprehensive. FAIL if fewer than 8 distinct fixture scenarios."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#atomic-tasks",
+    "spec-fa3a90b8#acceptance-criteria-and-execution",
+    "spec-fa3a90b8#cross-level-invariants"
+  ]
+}

@@ -6,7 +6,7 @@
     "spec-fa3a90b8#cross-level-invariants"
   ],
   "description": "impl-3c8d5e0a.md",
-  "atomic_tasks": [],
+  "atomic_tasks": ["at-3a0e5e9c", "at-9d55dbbd", "at-e1c51f43", "at-9f835059", "at-cc72052d", "at-5db529c8", "at-3a7815aa"],
   "modules": ["impl-schema", "impl-validation"],
   "dependencies": ["impl-7e2a9f1b"],
   "status": "draft"

@@ -1,0 +1,58 @@
+{
+  "id": "at-3a7815aa",
+  "parent": "impl-3c8d5e0a",
+  "description": "at-3a7815aa.md",
+  "blocked_by": ["at-e1c51f43", "at-5db529c8", "at-9d55dbbd"],
+  "blocks": [],
+  "scope": {
+    "files": [
+      "tests/unit/ring0/impl-validator.test.ts",
+      "tests/fixtures/impl-docs/valid-impl.json",
+      "tests/fixtures/impl-docs/valid-impl.md",
+      "tests/fixtures/impl-docs/invalid-impl-samples.ts"
+    ],
+    "modules": ["impl-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-9dbbc4f3",
+      "type": "build",
+      "description": "TypeScript compiles with no errors including the test file",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-cac70e5e",
+      "type": "test",
+      "description": "All Ring 0 impl validator unit tests pass",
+      "verify": "npx vitest run tests/unit/ring0/impl-validator.test.ts"
+    },
+    {
+      "id": "ac-97f9f01e",
+      "type": "test",
+      "description": "Graph utility unit tests pass (cycle detection, adjacency list construction)",
+      "verify": "npx vitest run tests/unit/ring0/impl-validator.test.ts -t graph"
+    },
+    {
+      "id": "ac-333c819c",
+      "type": "review",
+      "description": "Test coverage includes positive and negative cases for all 18 Ring 0 rules and graph utilities",
+      "rubric": "Verify that impl-validator.test.ts contains at least one positive (passing) and one negative (failing) test case for each of the 18 R0-I rules (R0-I40 through R0-I51, R0-I60 through R0-I67). Verify it includes tests for graph utilities: buildAdjacencyList with empty/non-empty graphs, detectCycles with acyclic graphs, simple cycles, and transitive cycles. Verify fixtures include a valid impl doc (JSON+Markdown) and invalid samples covering each rule violation. Verdict: PASS if all rules and graph utilities have positive+negative coverage with appropriate fixtures; FAIL if any rule lacks test coverage."
+    },
+    {
+      "id": "ac-e46d86ce",
+      "type": "review",
+      "description": "Test fixtures are synthetic and self-contained, not depending on external files",
+      "rubric": "Verify that all test fixtures in tests/fixtures/impl-docs/ and inline test data in the test file are synthetic (fabricated for testing), self-contained (no references to real project files that must exist), and clearly named to indicate their purpose (e.g., valid-impl.json, invalid-impl-samples.ts with descriptive exports). Verdict: PASS if all fixtures are synthetic and self-contained; FAIL if any depend on real project state."
+    },
+    {
+      "id": "ac-42445b23",
+      "type": "build",
+      "description": "Full test suite runs without errors",
+      "verify": "npx vitest run"
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#implementation-documents",
+    "spec-fa3a90b8#cross-level-invariants"
+  ]
+}

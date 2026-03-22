@@ -1,0 +1,37 @@
+{
+  "id": "at-73d6ad76",
+  "parent": "impl-7e2a9f1b",
+  "description": "at-73d6ad76.md",
+  "blocked_by": ["at-e27804a5"],
+  "blocks": ["at-934f341f", "at-17bc59d3", "at-0b9f2dab"],
+  "scope": {
+    "files": [
+      "src/parsers/markdown.ts"
+    ],
+    "modules": ["spec-schema"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-8047e2d5",
+      "type": "build",
+      "description": "TypeScript compiles with no errors including the new markdown parser",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-f1a0cce4",
+      "type": "review",
+      "description": "Heading extractor is a pure function with correct return type and slug generation",
+      "rubric": "Verify: (1) extractHeadings function takes a raw markdown string and returns an array of {level:number, text:string, slug:string, startLine:number, endLine:number}. (2) Slug generation lowercases, replaces spaces with hyphens, strips special characters. (3) Function is pure — no I/O, no side effects, no imports of fs or path. (4) Handles edge cases: empty string input returns empty array, headings at end of file get correct endLine. (5) Only recognizes ATX-style headings (lines starting with #). PASS if all five hold. FAIL if any is missing."
+    },
+    {
+      "id": "ac-9295d301",
+      "type": "review",
+      "description": "Function signature and module structure follow established conventions",
+      "rubric": "Verify: (1) File is at src/parsers/markdown.ts. (2) Exports use named exports (not default). (3) Return type interface (HeadingInfo or similar) is exported for downstream consumers. (4) camelCase function name, PascalCase interface name. PASS if all four hold. FAIL if any violated."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#document-hierarchy-and-structure",
+    "spec-fa3a90b8#specification-documents"
+  ]
+}

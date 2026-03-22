@@ -1,0 +1,38 @@
+{
+  "id": "at-3a0e5e9c",
+  "parent": "impl-3c8d5e0a",
+  "description": "at-3a0e5e9c.md",
+  "blocked_by": [],
+  "blocks": ["at-9d55dbbd", "at-e1c51f43", "at-9f835059", "at-cc72052d", "at-5db529c8"],
+  "scope": {
+    "files": [
+      "src/schemas/impl.schema.json",
+      "src/types/definitions.ts"
+    ],
+    "modules": ["impl-schema"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-55127c8b",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding ImplDefinition to definitions.ts",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-2c449582",
+      "type": "review",
+      "description": "JSON Schema enforces all required fields, ID patterns, and status-array constraints from REQ-01 through REQ-05",
+      "rubric": "Verify that impl.schema.json defines required fields (id, spec_sections, description, modules, status), enforces id pattern ^impl-[0-9a-f]{8}$, description pattern ^impl-[0-9a-f]{8}\\.md$, spec_sections minItems 1 with item pattern ^spec-[0-9a-f]{8}#[a-z0-9-]+$, status enum [draft, validated, decomposed], and conditional constraints: when status is draft or validated atomic_tasks must be empty, when decomposed atomic_tasks must be non-empty. Verdict: PASS if all patterns and constraints match REQ-01 through REQ-05; FAIL if any are missing or incorrect."
+    },
+    {
+      "id": "ac-e45dcf61",
+      "type": "review",
+      "description": "ImplDefinition TypeScript interface matches the JSON Schema and follows the SpecDefinition pattern from impl-7e2a9f1b",
+      "rubric": "Verify that ImplDefinition in definitions.ts mirrors impl.schema.json fields with correct TypeScript types, is exported, and follows the same pattern as SpecDefinition (same file, consistent naming conventions PascalCase interface, camelCase or snake_case fields matching the JSON). Verdict: PASS if interface matches schema and follows existing pattern; FAIL otherwise."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#document-hierarchy-and-structure",
+    "spec-fa3a90b8#implementation-documents"
+  ]
+}

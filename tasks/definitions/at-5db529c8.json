@@ -1,0 +1,30 @@
+{
+  "id": "at-5db529c8",
+  "parent": "impl-3c8d5e0a",
+  "description": "at-5db529c8.md",
+  "blocked_by": ["at-3a0e5e9c", "at-9d55dbbd"],
+  "blocks": ["at-3a7815aa"],
+  "scope": {
+    "files": [
+      "src/validators/cross-level/impl-task.ts"
+    ],
+    "modules": ["impl-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-2e4c0cd7",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding cross-level validators",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-e417ddee",
+      "type": "review",
+      "description": "All five cross-level invariants CL-T01 through CL-T05 are implemented as deterministic pure functions",
+      "rubric": "Verify that impl-task.ts implements CL-T01 (bidirectional parent-task consistency), CL-T02 (decomposed status requires at least one task), CL-T03 (module containment: child modules subset of parent, full coverage), CL-T04 (context_refs union covers impl spec_sections), CL-T05 (dependency ordering consistency between impl deps and task blocked_by/blocks). Each must be deterministic with no LLM involvement. The module must export a single entry point or individual check functions, all pure (no file I/O). Verdict: PASS if all five invariants are present, deterministic, and pure; FAIL if any are missing, non-deterministic, or perform I/O."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#cross-level-invariants"
+  ]
+}

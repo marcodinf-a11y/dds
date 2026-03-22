@@ -1,0 +1,31 @@
+{
+  "id": "at-353cb055",
+  "parent": "impl-5a0e3d8f",
+  "description": "at-353cb055.md",
+  "blocked_by": ["at-d5c5627d", "at-2fda3e72", "at-e0ffdd40"],
+  "blocks": ["at-0b694e5d"],
+  "scope": {
+    "files": [
+      "src/pipeline/refine.ts"
+    ],
+    "modules": ["refinement"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-8ddf4e9b",
+      "type": "build",
+      "description": "TypeScript compiles with no errors after adding refine.ts",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-2860d93f",
+      "type": "review",
+      "description": "Refinement loop implements the docs/04 pseudocode with correct ring sequencing, fix dispatch, convergence tracking, and three termination conditions",
+      "rubric": "Verify: (1) refine.ts exports refine(document, level, config) that implements a while loop with max_iterations guard. (2) Each iteration runs Ring 0 (direct call to per-level validator), then Ring 1 (via ring1 runner) only if Ring 0 passes, then Ring 2 (via ring2 runner) only if Ring 1 passes — strict sequential gating per REQ-01. (3) On Ring 0 failure: calls fixStructural, then restarts from Ring 0. (4) On Ring 1 failure: tracks previous_ring1_issues, calls checkConvergence against previous iteration, escalates if converged, otherwise calls fixSemantic and restarts from Ring 0. (5) On Ring 2 failure: tracks previous_ring2_issues, calls checkConvergence, escalates if converged, otherwise calls fixQuality and restarts from Ring 0. (6) Three termination paths: all rings pass returns { promoted: true }, convergence detected returns { escalated: true, report }, max iterations returns { escalated: true, report }. (7) previous_ring1_issues and previous_ring2_issues are maintained as local variables, tracked separately per ring. PASS if all seven hold; FAIL if any is missing."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#refinement-and-escalation",
+    "spec-fa3a90b8#validation-rings"
+  ]
+}
