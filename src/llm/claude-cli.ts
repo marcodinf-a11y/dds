@@ -174,16 +174,27 @@ export function callClaude<T = unknown>(
       lastCallTimestamp = Date.now();
 
       const stdout = execSync(
-        `claude -p ${shellQuote(prompt)} --output-format json --json-schema ${shellQuote(schemaArg)} --max-turns 1`,
+        `claude -p ${shellQuote(prompt)} --output-format json --json-schema ${shellQuote(schemaArg)} --max-turns 3`,
         { timeout: timeoutMs, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
       );
 
       const wrapper = JSON.parse(stdout);
 
       // Claude CLI with --output-format json returns a wrapper object.
-      // The actual LLM response is in the `result` field as a string.
-      const rawResult = typeof wrapper === 'object' && wrapper !== null && 'result' in wrapper
-        ? wrapper.result
+      // Check for error conditions first.
+      if (typeof wrapper === 'object' && wrapper !== null) {
+        if (wrapper.is_error) {
+          throw new Error(`Claude CLI error: ${wrapper.result ?? 'unknown error'}`);
+        }
+        if (wrapper.subtype && wrapper.subtype !== 'success') {
+          throw new Error(`Claude CLI non-success response: subtype=${wrapper.subtype}, stop_reason=${wrapper.stop_reason ?? 'unknown'}`);
+        }
+      }
+
+      // With --json-schema, the structured output is in `structured_output`.
+      // Without it, the LLM text response is in `result` as a string.
+      const rawResult = typeof wrapper === 'object' && wrapper !== null
+        ? (wrapper.structured_output ?? wrapper.result ?? wrapper)
         : wrapper;
 
       // The result may be a string (possibly with markdown code fences) or already parsed JSON
@@ -191,7 +202,14 @@ export function callClaude<T = unknown>(
       if (typeof rawResult === 'string') {
         // Strip markdown code fences if present
         const cleaned = rawResult.replace(/^```(?:json)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
-        parsed = JSON.parse(cleaned);
+        if (!cleaned) {
+          throw new Error(`Claude CLI returned empty result. Wrapper subtype: ${wrapper?.subtype ?? 'unknown'}`);
+        }
+        try {
+          parsed = JSON.parse(cleaned);
+        } catch {
+          throw new Error(`Failed to parse Claude CLI result as JSON. First 300 chars: ${cleaned.substring(0, 300)}`);
+        }
       } else {
         parsed = rawResult;
       }
@@ -203,6 +221,8 @@ export function callClaude<T = unknown>(
         const msg = validate.errors
           ?.map((e: { instancePath: string; message?: string }) => `${e.instancePath} ${e.message}`)
           .join('; ');
+        console.error('[callClaude] Schema validation failed. Raw result type:', typeof rawResult);
+        console.error('[callClaude] Parsed value (first 500 chars):', JSON.stringify(parsed).substring(0, 500));
         throw new Error(`Response schema validation failed: ${msg}`);
       }
 
