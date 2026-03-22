@@ -8,21 +8,12 @@ export interface HeadingInfo {
 }
 
 /**
- * @deprecated Use HeadingInfo instead.
- */
-export interface HeadingEntry {
-  level: number;
-  text: string;
-  content: string;
-}
-
-/**
  * Generate a URL-safe slug from heading text.
  *
  * Lowercases, replaces spaces with hyphens, strips characters that are not
  * alphanumeric or hyphens, and collapses consecutive hyphens into one.
  */
-export function generateSlug(text: string): string {
+function generateSlug(text: string): string {
   return text
     .toLowerCase()
     .replace(/\s+/g, '-')
