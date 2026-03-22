@@ -1,0 +1,9 @@
+{
+  "id": "impl-00000001",
+  "spec_sections": ["spec-00000001#test-section"],
+  "description": "impl-00000001.md",
+  "modules": ["mod-a", "mod-b"],
+  "status": "draft",
+  "atomic_tasks": [],
+  "dependencies": ["impl-00000002"]
+}
