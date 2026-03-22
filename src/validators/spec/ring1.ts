@@ -22,11 +22,17 @@ ${specMarkdown}
 Respond with ONLY a JSON object in this exact structure (no markdown fencing, no extra text):
 {
   "check": "R1-S01",
-  "verdict": "pass" or "fail",
-  "issues": ["description of each inconsistency found"]
+  "verdict": "pass" | "fail",
+  "issues": [
+    {
+      "reference": "string — section, ID, or line where the issue occurs",
+      "description": "string — what specifically is wrong"
+    }
+  ]
 }
 
-Set verdict to "pass" if all terminology is used consistently throughout the document. Set verdict to "fail" if any inconsistencies are found, and list each one in the issues array. If there are no issues, set issues to an empty array.`;
+If no issues are found, return an empty issues array with verdict "pass".
+Set verdict to "fail" if any inconsistencies are found, and list each one in the issues array as an object with reference and description.`;
 }
 
 /**
@@ -46,11 +52,17 @@ ${specMarkdown}
 Respond with ONLY a JSON object in this exact structure (no markdown fencing, no extra text):
 {
   "check": "R1-S02",
-  "verdict": "pass" or "fail",
-  "issues": ["description of each non-atomic requirement found"]
+  "verdict": "pass" | "fail",
+  "issues": [
+    {
+      "reference": "string — section, ID, or line where the issue occurs",
+      "description": "string — what specifically is wrong"
+    }
+  ]
 }
 
-Set verdict to "pass" if every FR-XX and NFR-XX defines exactly one testable requirement. Set verdict to "fail" if any requirement is compound, vague, or not independently testable, and list each one in the issues array. If there are no issues, set issues to an empty array.`;
+If no issues are found, return an empty issues array with verdict "pass".
+Set verdict to "fail" if any requirement is compound, vague, or not independently testable, and list each one in the issues array as an object with reference and description.`;
 }
 
 /**
@@ -87,11 +99,17 @@ ${relatedSections}
 Respond with ONLY a JSON object in this exact structure (no markdown fencing, no extra text):
 {
   "check": "R1-S03",
-  "verdict": "pass" or "fail",
-  "issues": ["description of each contradiction found"]
+  "verdict": "pass" | "fail",
+  "issues": [
+    {
+      "reference": "string — section, ID, or line where the issue occurs",
+      "description": "string — what specifically is wrong"
+    }
+  ]
 }
 
-Set verdict to "pass" if no contradictions are found between the primary spec and any related spec. Set verdict to "fail" if any contradictions exist, and list each one in the issues array. If there are no issues, set issues to an empty array.`;
+If no issues are found, return an empty issues array with verdict "pass".
+Set verdict to "fail" if any contradictions exist, and list each one in the issues array as an object with reference and description.`;
 }
 
 /**
@@ -111,9 +129,15 @@ ${specMarkdown}
 Respond with ONLY a JSON object in this exact structure (no markdown fencing, no extra text):
 {
   "check": "R1-S04",
-  "verdict": "pass" or "fail",
-  "issues": ["description of each functional area not covered by decomposition guidance"]
+  "verdict": "pass" | "fail",
+  "issues": [
+    {
+      "reference": "string — section, ID, or line where the issue occurs",
+      "description": "string — what specifically is wrong"
+    }
+  ]
 }
 
-Set verdict to "pass" if every functional area from the Functional Requirements section is addressed in the Decomposition Guidance. Set verdict to "fail" if any functional area is missing from the guidance, and list each one in the issues array. If there are no issues, set issues to an empty array.`;
+If no issues are found, return an empty issues array with verdict "pass".
+Set verdict to "fail" if any functional area is missing from the guidance, and list each one in the issues array as an object with reference and description.`;
 }
