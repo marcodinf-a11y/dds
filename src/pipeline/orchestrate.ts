@@ -395,9 +395,13 @@ export async function runPipeline(
   const perDocumentResults: DocumentResult[] = [];
   const crossLevelResults: CrossLevelResult[] = [];
 
+  const log = (msg: string) => process.stderr.write(`[pipeline] ${msg}\n`);
+
   // ---------------------------------------------------------------------------
   // Phase 1: Validate the root spec
   // ---------------------------------------------------------------------------
+
+  log(`Phase 1: Validating spec ${specId}...`);
 
   const specJsonPath = path.resolve("specs", "definitions", `${specId}.json`);
   const specMdPath = path.resolve("specs", "descriptions", `${specId}.md`);
@@ -408,6 +412,7 @@ export async function runPipeline(
   perDocumentResults.push(toDocumentResult(specId, "spec", specRefineResult));
 
   if ("escalated" in specRefineResult) {
+    log(`Phase 1: Spec escalated — pipeline halting`);
     stats.escalationCount++;
     return {
       runId,
@@ -423,6 +428,9 @@ export async function runPipeline(
   // ---------------------------------------------------------------------------
   // Phase 2: Decompose spec into impl docs, validate each
   // ---------------------------------------------------------------------------
+
+  log(`Phase 1: Spec validated successfully`);
+  log(`Phase 2: Decomposing spec into impl docs...`);
 
   const specJson = readJson<SpecDefinition>(specJsonPath);
   const specMarkdown = readText(specMdPath);
@@ -452,8 +460,10 @@ export async function runPipeline(
   const generatedImplDocs: ImplDefinition[] = [];
 
   // Write paired artifacts and validate each impl doc
+  log(`Phase 2: Generated ${parsedImplDocs.jsons.length} impl docs, validating each...`);
   for (let i = 0; i < parsedImplDocs.jsons.length; i++) {
     const implDef = parsedImplDocs.jsons[i] as unknown as ImplDefinition;
+    log(`Phase 2: Validating impl doc ${i + 1}/${parsedImplDocs.jsons.length} (${implDef.id})...`);
     const implMd = parsedImplDocs.markdowns[i] ?? "";
 
     // Write JSON and Markdown artifacts to implementation/ directory
@@ -501,9 +511,12 @@ export async function runPipeline(
   // Phase 3: Decompose each impl doc into atomic tasks, validate each
   // ---------------------------------------------------------------------------
 
+  log(`Phase 3: Decomposing ${generatedImplDocs.length} impl docs into atomic tasks...`);
+
   const allTasks: TaskDefinition[] = [];
 
   for (const implDef of generatedImplDocs) {
+    log(`Phase 3: Decomposing impl doc ${implDef.id} into tasks...`);
     const implJsonPath = path.resolve("implementation", "definitions", `${implDef.id}.json`);
     const implMdPath = path.resolve("implementation", "descriptions", `${implDef.id}.md`);
 
@@ -613,7 +626,10 @@ export async function runPipeline(
   // Phase 4: Run all cross-level invariants
   // ---------------------------------------------------------------------------
 
+  log(`Phase 4: Running cross-level invariants...`);
+
   // CL-S01 through CL-S04: spec-to-impl cross-level checks
+  log(`Phase 4: CL-S01..CL-S04 (spec-impl)...`);
   const specImplResults = await runSpecImplCrossLevel(
     specJson,
     generatedImplDocs.map((d) => ({
@@ -626,6 +642,7 @@ export async function runPipeline(
   crossLevelResults.push(...specImplResults);
 
   // CL-T01 through CL-T05: impl-to-task cross-level checks (all tasks combined)
+  log(`Phase 4: CL-T01..CL-T05 (impl-task)...`);
   const allImplTaskResults = await runImplTaskCrossLevel(
     generatedImplDocs,
     allTasks.map((t) => ({
@@ -640,6 +657,7 @@ export async function runPipeline(
   crossLevelResults.push(...allImplTaskResults);
 
   // CL-F01, CL-F02: Full-stack traceability
+  log(`Phase 4: CL-F01, CL-F02 (full-stack traceability)...`);
   const implMarkdowns = new Map<string, string>();
   for (const implDef of generatedImplDocs) {
     const implMdPath = path.resolve("implementation", "descriptions", `${implDef.id}.md`);
@@ -671,8 +689,13 @@ export async function runPipeline(
   const finalStatus = allCrossLevelPassed ? "completed" : "escalated";
 
   if (!allCrossLevelPassed) {
+    log(`Phase 4: Cross-level checks failed — escalating`);
     stats.escalationCount++;
+  } else {
+    log(`Phase 4: All cross-level checks passed`);
   }
+
+  log(`Pipeline ${finalStatus}. Docs validated: spec=${stats.documentsValidated.spec} impl=${stats.documentsValidated.impl} task=${stats.documentsValidated.task}`);
 
   return {
     runId,

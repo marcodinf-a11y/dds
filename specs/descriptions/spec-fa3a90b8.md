@@ -182,141 +182,141 @@ The primary consumers of this system are AI coding agents (which execute atomic 
 
 - **FR-76:** A single task definition may have multiple execution records representing retry attempts.
 
-- **FR-78:** Execution record run numbers shall be sequential per task_id with no gaps.
+- **FR-77:** Execution record run numbers shall be sequential per task_id with no gaps.
 
-- **FR-77:** When a task's parent implementation document is invalidated (reverts to draft status), any execution records for that task with status `pending` or `running` shall be updated to `abandoned` status with `finished_at` set to the current time.
+- **FR-78:** When a task's parent implementation document is invalidated (reverts to draft status), any execution records for that task with status `pending` or `running` shall be updated to `abandoned` status with `finished_at` set to the current time.
 
 ### Validation Ring Sequence
 
-- **FR-78:** Every document shall pass through three validation rings in strict sequence before promotion from `draft` to `validated`: Ring 0 (structural), then Ring 1 (semantic), then Ring 2 (quality). No ring may be skipped or reordered.
+- **FR-79:** Every document shall pass through three validation rings in strict sequence before promotion from `draft` to `validated`: Ring 0 (structural), then Ring 1 (semantic), then Ring 2 (quality). No ring may be skipped or reordered.
 
-- **FR-79:** Ring 1 shall only execute if Ring 0 passes. Ring 2 shall only execute if Ring 1 passes.
+- **FR-80:** Ring 1 shall only execute if Ring 0 passes. Ring 2 shall only execute if Ring 1 passes.
 
 ### Ring 0: Structural Validation
 
-- **FR-80:** Ring 0 shall perform deterministic structural validation with no LLM involvement.
+- **FR-81:** Ring 0 shall perform deterministic structural validation with no LLM involvement.
 
-- **FR-81:** Ring 0 shall validate JSON schema conformance against the level's definition schema.
+- **FR-82:** Ring 0 shall validate JSON schema conformance against the level's definition schema.
 
-- **FR-82:** Ring 0 shall validate Markdown template structure (correct headings in required order, no empty sections).
+- **FR-83:** Ring 0 shall validate Markdown template structure (correct headings in required order, no empty sections).
 
-- **FR-83:** Ring 0 shall validate ID format and uniqueness.
+- **FR-84:** Ring 0 shall validate ID format and uniqueness.
 
-- **FR-84:** Ring 0 shall validate dependency graph acyclicity.
+- **FR-85:** Ring 0 shall validate dependency graph acyclicity.
 
-- **FR-85:** Ring 0 shall validate dependency symmetry (for atomic tasks).
+- **FR-86:** Ring 0 shall validate dependency symmetry (for atomic tasks).
 
-- **FR-86:** Ring 0 shall validate status-field consistency (e.g., child arrays empty when draft/validated, non-empty when decomposed).
+- **FR-87:** Ring 0 shall validate status-field consistency (e.g., child arrays empty when draft/validated, non-empty when decomposed).
 
-- **FR-87:** Ring 0 shall validate cross-field consistency (e.g., H1 ID matches JSON definition ID).
+- **FR-88:** Ring 0 shall validate cross-field consistency (e.g., H1 ID matches JSON definition ID).
 
 ### Ring 1: Semantic Validation
 
-- **FR-88:** Ring 1 shall perform semantic consistency validation using LLM prompts. Each Ring 1 rule shall ask exactly one question, receive the relevant document content as input, and produce structured JSON output conforming to the Ring 1 result schema: `rule_id` (the rule's identifier), `verdict` (pass or fail), and `issues` (array of objects each with `reference` and `description` fields). An empty issues array with verdict pass indicates no problems found.
+- **FR-89:** Ring 1 shall perform semantic consistency validation using LLM prompts. Each Ring 1 rule shall ask exactly one question, receive the relevant document content as input, and produce structured JSON output conforming to the Ring 1 result schema: `rule_id` (the rule's identifier), `verdict` (pass or fail), and `issues` (array of objects each with `reference` and `description` fields). An empty issues array with verdict pass indicates no problems found.
 
 ### Ring 2: Quality Validation
 
-- **FR-89:** Ring 2 shall perform quality assessment using LLM rubrics. Each Ring 2 rule shall evaluate a single quality dimension against an explicit rubric and produce structured JSON output conforming to the Ring 2 result schema: `rule_id` (the rule's identifier), `dimension` (quality dimension name), `verdict` (pass or fail), `evidence` (array of objects each with `reference`, `finding`, and per-element `assessment`), and `summary` (one-sentence overall assessment).
+- **FR-90:** Ring 2 shall perform quality assessment using LLM rubrics. Each Ring 2 rule shall evaluate a single quality dimension against an explicit rubric and produce structured JSON output conforming to the Ring 2 result schema: `rule_id` (the rule's identifier), `dimension` (quality dimension name), `verdict` (pass or fail), `evidence` (array of objects each with `reference`, `finding`, and per-element `assessment`), and `summary` (one-sentence overall assessment).
 
 ### Level-Specific Validation Rules
 
-- **FR-90:** Each document level shall have its own set of Ring 0, Ring 1, and Ring 2 validation rules. The specific rules, prompts, and rubrics for each level are defined in the corresponding schema documentation: specification rules in the spec schema document, implementation document rules in the impl doc schema document, and atomic task rules in the task schema document.
+- **FR-91:** Each document level shall have its own set of Ring 0, Ring 1, and Ring 2 validation rules. The specific rules, prompts, and rubrics for each level are defined in the corresponding schema documentation: specification rules in the spec schema document, implementation document rules in the impl doc schema document, and atomic task rules in the task schema document.
 
 ### Refinement and Escalation
 
-- **FR-91:** The refinement loop shall execute validation rings sequentially: Ring 0 first, then Ring 1 (only if Ring 0 passes), then Ring 2 (only if Ring 1 passes).
+- **FR-92:** The refinement loop shall execute validation rings sequentially: Ring 0 first, then Ring 1 (only if Ring 0 passes), then Ring 2 (only if Ring 1 passes).
 
-- **FR-92:** When any ring fails and a fix is applied, validation shall restart from Ring 0, because a semantic fix may break structure and a quality fix may introduce semantic contradictions.
+- **FR-93:** When any ring fails and a fix is applied, validation shall restart from Ring 0, because a semantic fix may break structure and a quality fix may introduce semantic contradictions.
 
-- **FR-93:** When Ring 0 validation fails, the system shall attempt automated structural fixes via `fix_structural` (deterministic corrections where possible, such as reordering sections or fixing JSON schema violations; LLM-based for non-trivial structural issues).
+- **FR-94:** When Ring 0 validation fails, the system shall attempt automated structural fixes via `fix_structural` (deterministic corrections where possible, such as reordering sections or fixing JSON schema violations; LLM-based for non-trivial structural issues).
 
-- **FR-94:** When Ring 1 validation fails, the system shall attempt automated semantic fixes via `fix_semantic` (LLM-based, aligning with the parent document and using placeholders where content is unknown).
+- **FR-95:** When Ring 1 validation fails, the system shall attempt automated semantic fixes via `fix_semantic` (LLM-based, aligning with the parent document and using placeholders where content is unknown).
 
-- **FR-95:** When Ring 2 validation fails, the system shall attempt automated quality fixes via `fix_quality` (LLM-based, making the minimum changes necessary to pass the rubric).
+- **FR-96:** When Ring 2 validation fails, the system shall attempt automated quality fixes via `fix_quality` (LLM-based, making the minimum changes necessary to pass the rubric).
 
-- **FR-96:** Convergence detection shall track previous issues separately per ring (`previous_ring1_issues` and `previous_ring2_issues` as independent variables).
+- **FR-97:** Convergence detection shall track previous issues separately per ring (`previous_ring1_issues` and `previous_ring2_issues` as independent variables).
 
-- **FR-97:** Convergence detection shall compare the set of (rule, reference) pairs between the current and previous iteration of the same ring. The overlap ratio is defined as |intersection| / |current|.
+- **FR-98:** Convergence detection shall compare the set of (rule, reference) pairs between the current and previous iteration of the same ring. The overlap ratio is defined as |intersection| / |current|.
 
-- **FR-98:** When the overlap ratio exceeds the configured convergence threshold, the system shall declare a convergence plateau and escalate.
+- **FR-99:** When the overlap ratio exceeds the configured convergence threshold, the system shall declare a convergence plateau and escalate.
 
-- **FR-99:** When all three validation rings pass, the refinement loop shall terminate and the document shall be promoted to `validated` status.
+- **FR-100:** When all three validation rings pass, the refinement loop shall terminate and the document shall be promoted to `validated` status.
 
-- **FR-100:** When convergence is detected at Ring 1 or Ring 2, the refinement loop shall terminate and the document shall be escalated for human review.
+- **FR-101:** When convergence is detected at Ring 1 or Ring 2, the refinement loop shall terminate and the document shall be escalated for human review.
 
-- **FR-101:** When the configured maximum iteration count is reached without promotion, the refinement loop shall terminate and the document shall be escalated for human review.
+- **FR-102:** When the configured maximum iteration count is reached without promotion, the refinement loop shall terminate and the document shall be escalated for human review.
 
-- **FR-102:** Escalation reports shall be written to the `pipeline/escalations/` directory.
+- **FR-103:** Escalation reports shall be written to the `pipeline/escalations/` directory.
 
-- **FR-103:** Escalation reports shall contain: `document_id`, `document_level` (one of: `specification`, `implementation_document`, or `atomic_task`), `reason` (convergence plateau at a specific ring, or max iterations reached), `iterations_completed`, `unresolved_issues` (array with per-issue `rule` and `description`), `history` (array of per-iteration results showing each ring's pass/fail status), and `document_snapshot` (file path to the document's state at escalation time).
+- **FR-104:** Escalation reports shall contain: `document_id`, `document_level` (one of: `specification`, `implementation_document`, or `atomic_task`), `reason` (convergence plateau at a specific ring, or max iterations reached), `iterations_completed`, `unresolved_issues` (array with per-issue `rule` and `description`), `history` (array of per-iteration results showing each ring's pass/fail status), and `document_snapshot` (file path to the document's state at escalation time).
 
-- **FR-104:** Escalated documents may be manually edited by a human and re-submitted to the pipeline for another refinement attempt. Re-submission shall restart the refinement loop from Ring 0 at the escalated document's level.
+- **FR-105:** Escalated documents may be manually edited by a human and re-submitted to the pipeline for another refinement attempt. Re-submission shall restart the refinement loop from Ring 0 at the escalated document's level.
 
 ### Cross-Level Invariants
 
-- **FR-105:** The system shall enforce forward consistency from implementation documents to specifications (CL-S01 forward): every implementation document's `spec_sections` entries shall reference a specification whose `implementation_docs` list contains that implementation document's ID.
+- **FR-106:** The system shall enforce forward consistency from implementation documents to specifications (CL-S01 forward): every implementation document's `spec_sections` entries shall reference a specification whose `implementation_docs` list contains that implementation document's ID.
 
-- **FR-106:** The system shall enforce backward consistency from specifications to implementation documents (CL-S01 backward): every specification's `implementation_docs` entries shall reference an implementation document whose `spec_sections` entries reference that specification.
+- **FR-107:** The system shall enforce backward consistency from specifications to implementation documents (CL-S01 backward): every specification's `implementation_docs` entries shall reference an implementation document whose `spec_sections` entries reference that specification.
 
-- **FR-107:** The system shall enforce forward consistency from atomic tasks to implementation documents (CL-T01 forward): every atomic task's `parent` field shall reference an implementation document whose `atomic_tasks` array contains that task's ID.
+- **FR-108:** The system shall enforce forward consistency from atomic tasks to implementation documents (CL-T01 forward): every atomic task's `parent` field shall reference an implementation document whose `atomic_tasks` array contains that task's ID.
 
-- **FR-108:** The system shall enforce backward consistency from implementation documents to atomic tasks (CL-T01 backward): every implementation document's `atomic_tasks` entries shall reference tasks whose `parent` field matches that implementation document's ID.
+- **FR-109:** The system shall enforce backward consistency from implementation documents to atomic tasks (CL-T01 backward): every implementation document's `atomic_tasks` entries shall reference tasks whose `parent` field matches that implementation document's ID.
 
-- **FR-109:** The system shall enforce that the union of all `spec_sections` entries across a specification's implementation documents covers every functional area (H3 heading under Functional Requirements) in that specification (CL-S03).
+- **FR-110:** The system shall enforce that the union of all `spec_sections` entries across a specification's implementation documents covers every functional area (H3 heading under Functional Requirements) in that specification (CL-S03).
 
-- **FR-110:** The system shall enforce that every module in an implementation document's `modules` list appears in at least one child task's `scope.modules`, and every child task's `scope.modules` is a subset of the parent's `modules` (CL-T03).
+- **FR-111:** The system shall enforce that every module in an implementation document's `modules` list appears in at least one child task's `scope.modules`, and every child task's `scope.modules` is a subset of the parent's `modules` (CL-T03).
 
-- **FR-111:** The system shall enforce that the union of all `context_refs` across an implementation document's atomic tasks covers all entries in that implementation document's `spec_sections` (CL-T04).
+- **FR-112:** The system shall enforce that the union of all `context_refs` across an implementation document's atomic tasks covers all entries in that implementation document's `spec_sections` (CL-T04).
 
-- **FR-112:** The system shall enforce forward traceability (CL-F01): every specification FR-XX and NFR-XX shall trace forward through at least one implementation document REQ-XX to at least one atomic task acceptance criterion.
+- **FR-113:** The system shall enforce forward traceability (CL-F01): every specification FR-XX and NFR-XX shall trace forward through at least one implementation document REQ-XX to at least one atomic task acceptance criterion.
 
-- **FR-113:** The system shall enforce backward traceability (CL-F02): every atomic task acceptance criterion shall trace backward through its parent implementation document to at least one specification FR-XX or NFR-XX. Traceability is structural — it verifies the existence of reference chains, not semantic coverage (which is Ring 1's responsibility).
+- **FR-114:** The system shall enforce backward traceability (CL-F02): every atomic task acceptance criterion shall trace backward through its parent implementation document to at least one specification FR-XX or NFR-XX. Traceability is structural — it verifies the existence of reference chains, not semantic coverage (which is Ring 1's responsibility).
 
-- **FR-114:** All cross-level invariants shall be deterministic (Ring 0 complexity) and shall be checked both after any individual document change (as part of incremental validation) and during Phase 4 of full pipeline runs.
+- **FR-115:** All cross-level invariants shall be deterministic (Ring 0 complexity) and shall be checked both after any individual document change (as part of incremental validation) and during Phase 4 of full pipeline runs.
 
 ### Pipeline Orchestration
 
-- **FR-115:** Phase 1 of a full pipeline run shall validate the specification through the refinement loop.
+- **FR-116:** Phase 1 of a full pipeline run shall validate the specification through the refinement loop.
 
-- **FR-116:** Phase 2 of a full pipeline run shall decompose the specification into implementation documents and validate each through the refinement loop.
+- **FR-117:** Phase 2 of a full pipeline run shall decompose the specification into implementation documents and validate each through the refinement loop.
 
-- **FR-117:** Phase 3 of a full pipeline run shall decompose each implementation document into atomic tasks, validate each through the refinement loop, and check cross-task invariants (dependency symmetry, acyclicity).
+- **FR-118:** Phase 3 of a full pipeline run shall decompose each implementation document into atomic tasks, validate each through the refinement loop, and check cross-task invariants (dependency symmetry, acyclicity).
 
-- **FR-118:** Phase 4 of a full pipeline run shall check all cross-level invariants across the full document tree.
+- **FR-119:** Phase 4 of a full pipeline run shall check all cross-level invariants across the full document tree.
 
-- **FR-119:** A full pipeline run shall execute phases sequentially in order (Phase 1 through Phase 4) and shall halt at any phase where an escalation occurs, reporting the blocking escalation.
+- **FR-120:** A full pipeline run shall execute phases sequentially in order (Phase 1 through Phase 4) and shall halt at any phase where an escalation occurs, reporting the blocking escalation.
 
-- **FR-120:** When a specification is modified, the system shall increment its `version` field.
+- **FR-121:** When a specification is modified, the system shall increment its `version` field.
 
-- **FR-121:** When a specification is modified, the system shall revert all downstream implementation documents to `draft` status and set any `pending` or `running` execution records for descendant tasks to `abandoned`.
+- **FR-122:** When a specification is modified, the system shall revert all downstream implementation documents to `draft` status and set any `pending` or `running` execution records for descendant tasks to `abandoned`.
 
-- **FR-122:** When re-decomposing after a specification modification, the system shall pass existing implementation documents to the generation step for incremental adjustment rather than generating entirely new documents, to preserve prior work where boundaries remain valid.
+- **FR-123:** When re-decomposing after a specification modification, the system shall pass existing implementation documents to the generation step for incremental adjustment rather than generating entirely new documents, to preserve prior work where boundaries remain valid.
 
-- **FR-123:** The system shall support incremental validation: when a single document changes, only the validation rules affected by that change shall re-run. The affected rules are determined by the document type and change scope — for example, editing a spec's Markdown triggers spec-level Ring 0+1+2 and affected CL-S rules; editing a task definition triggers task Ring 0 and dependency symmetry checks for all tasks referenced in its `blocked_by`/`blocks`.
+- **FR-124:** The system shall support incremental validation: when a single document changes, only the validation rules affected by that change shall re-run. The affected rules are determined by the document type and change scope — for example, editing a spec's Markdown triggers spec-level Ring 0+1+2 and affected CL-S rules; editing a task definition triggers task Ring 0 and dependency symmetry checks for all tasks referenced in its `blocked_by`/`blocks`.
 
-- **FR-124:** Each pipeline run shall produce a summary report written to `pipeline/reports/`.
+- **FR-125:** Each pipeline run shall produce a summary report written to `pipeline/reports/`.
 
-- **FR-125:** Pipeline summary reports shall contain: a unique run ID, the root spec ID, start and end timestamps, overall status (ready or blocked), per-document results (document ID, level, final status, per-ring pass/fail, iteration count), and aggregate statistics (documents validated per level, cross-level checks passed, total LLM calls, total token usage, refinement iterations per level, escalation count).
+- **FR-126:** Pipeline summary reports shall contain: a unique run ID, the root spec ID, start and end timestamps, overall status (ready or blocked), per-document results (document ID, level, final status, per-ring pass/fail, iteration count), and aggregate statistics (documents validated per level, cross-level checks passed, total LLM calls, total token usage, refinement iterations per level, escalation count).
 
 ### Document Decomposition
 
-- **FR-126:** The system shall decompose validated specifications into one or more implementation documents via LLM-assisted generation.
+- **FR-127:** The system shall decompose validated specifications into one or more implementation documents via LLM-assisted generation.
 
-- **FR-127:** Implementation document generation shall follow the specification's Decomposition Guidance section.
+- **FR-128:** Implementation document generation shall follow the specification's Decomposition Guidance section.
 
-- **FR-128:** Generated implementation documents shall produce paired JSON definition and Markdown description artifacts conforming to the implementation document schema and template.
+- **FR-129:** Generated implementation documents shall produce paired JSON definition and Markdown description artifacts conforming to the implementation document schema and template.
 
-- **FR-129:** The system shall decompose validated implementation documents into atomic tasks via LLM-assisted generation. The generation shall follow the implementation document's Decomposition Notes section.
+- **FR-130:** The system shall decompose validated implementation documents into atomic tasks via LLM-assisted generation. The generation shall follow the implementation document's Decomposition Notes section.
 
-- **FR-130:** Decomposition of implementation documents shall produce between 3 and 8 tasks.
+- **FR-131:** Decomposition of implementation documents shall produce between 3 and 8 tasks.
 
-- **FR-131:** Decomposition shall maintain dependency symmetry across all generated `blocked_by`/`blocks` fields.
+- **FR-132:** Decomposition shall maintain dependency symmetry across all generated `blocked_by`/`blocks` fields.
 
-- **FR-132:** Decomposition shall list tasks in intended execution order in the parent's `atomic_tasks` array.
+- **FR-133:** Decomposition shall list tasks in intended execution order in the parent's `atomic_tasks` array.
 
-- **FR-133:** After successful decomposition and validation of all generated children, the parent document's JSON definition shall be updated: `implementation_docs` populated with generated impl doc IDs (for specs) or `atomic_tasks` populated with generated task IDs in execution order (for impl docs).
+- **FR-134:** After successful decomposition and validation of all generated children, the parent document's JSON definition shall be updated: `implementation_docs` populated with generated impl doc IDs (for specs) or `atomic_tasks` populated with generated task IDs in execution order (for impl docs).
 
-- **FR-134:** After successful decomposition and validation of all generated children, the parent's status shall change to `decomposed`.
+- **FR-135:** After successful decomposition and validation of all generated children, the parent's status shall change to `decomposed`.
 
 ## Non-Functional Requirements
 
@@ -434,7 +434,7 @@ Dependencies: Impl Doc 1 (ID format and status lifecycle), Impl Doc 2 (spec sect
 
 ### Impl Doc 4: Atomic Task Schema and Validation
 
-Covers FR-43 through FR-77 (atomic task structure, dependency symmetry, scope enforcement, acceptance criteria, and execution records). Implements the AtomicTaskDefinition JSON schema, the five-section Markdown template, the ExecutionRecord JSON schema, and all task-level validation rules: Ring 0 rules R0-T01 through R0-T34, Ring 1 rules R1-T01 through R1-T04, and Ring 2 rules R2-T01 through R2-T05. Also implements the atomic task generation prompt and the full-stack traceability invariants CL-F01 and CL-F02.
+Covers FR-43 through FR-78 (atomic task structure, dependency symmetry, scope enforcement, acceptance criteria, and execution records). Implements the AtomicTaskDefinition JSON schema, the five-section Markdown template, the ExecutionRecord JSON schema, and all task-level validation rules: Ring 0 rules R0-T01 through R0-T34, Ring 1 rules R1-T01 through R1-T04, and Ring 2 rules R2-T01 through R2-T05. Also implements the atomic task generation prompt and the full-stack traceability invariants CL-F01 and CL-F02.
 
 Maps to modules: `task-schema`, `task-validation`, `execution-records`.
 
@@ -444,7 +444,7 @@ Note: The source reference document (docs/03-atomic-task-schema.md) uses the ter
 
 ### Impl Doc 5: Validation Pipeline and Orchestration
 
-Covers FR-78 through FR-134 (validation ring framework, shared LLM system prompts, refinement loop, convergence detection, fix functions, escalation, pipeline orchestration, incremental validation, decomposition coordination, and reporting). This is the largest implementation document because it contains the pipeline engine that consumes the per-level rules defined in Impl Docs 2 through 4. The size imbalance reflects the system's architecture: the pipeline engine is genuinely the largest component. This is not a signal to split — the refinement loop, convergence detection, fix functions, escalation, and orchestration are tightly coupled and share state (e.g., `previous_ring1_issues`). Splitting them would create artificial boundaries across a single control flow.
+Covers FR-79 through FR-135 (validation ring framework, shared LLM system prompts, refinement loop, convergence detection, fix functions, escalation, pipeline orchestration, incremental validation, decomposition coordination, and reporting). This is the largest implementation document because it contains the pipeline engine that consumes the per-level rules defined in Impl Docs 2 through 4. The size imbalance reflects the system's architecture: the pipeline engine is genuinely the largest component. This is not a signal to split — the refinement loop, convergence detection, fix functions, escalation, and orchestration are tightly coupled and share state (e.g., `previous_ring1_issues`). Splitting them would create artificial boundaries across a single control flow.
 
 Maps to modules: `pipeline`, `refinement`, `escalation`, `decomposition`, `reporting`.
 

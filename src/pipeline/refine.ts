@@ -277,16 +277,23 @@ export function refine(
   let previousRing2Issues: IssuePair[] = [];
   const history: IterationRecord[] = [];
 
+  const docId = extractDocumentId(documentPath);
+  const log = (msg: string) => process.stderr.write(`  [refine] ${msg}\n`);
+
   while (iteration < maxIterations) {
     iteration++;
+    log(`--- Iteration ${iteration}/${maxIterations} for ${docId} (${level}) ---`);
 
     // Read the current document content from disk.
     const documentContent = fs.readFileSync(documentPath, "utf-8");
 
     // --- Ring 0: Structural validation ---
+    log(`Ring 0: validating...`);
     const ring0Result = runRing0(documentContent, level, documentPath);
 
     if (!ring0Result.passed) {
+      log(`Ring 0: FAIL (${ring0Result.failures.length} issues: ${ring0Result.failures.map(f => f.rule).join(', ')})`);
+      log(`Ring 0: applying structural fix...`);
       // Fix structural issues and write back to disk.
       const fixed = fixStructural(
         documentContent,
@@ -309,15 +316,22 @@ export function refine(
       continue;
     }
 
+    log(`Ring 0: PASS`);
+
     // --- Ring 1: Semantic consistency ---
     const ring1Rules = RING1_RULES[level];
-    const ring1Results = ring1Rules.map((ruleId) =>
-      runRing1Check(ruleId, documentContent, level, config),
-    );
+    log(`Ring 1: running ${ring1Rules.length} checks (${ring1Rules.join(', ')})...`);
+    const ring1Results = ring1Rules.map((ruleId) => {
+      log(`  Ring 1: ${ruleId}...`);
+      const r = runRing1Check(ruleId, documentContent, level, config);
+      log(`  Ring 1: ${ruleId} → ${r.verdict}${r.verdict === 'fail' ? ` (${r.issues.length} issues)` : ''}`);
+      return r;
+    });
 
     const ring1Failures = ring1Results.filter((r) => r.verdict === "fail");
 
     if (ring1Failures.length > 0) {
+      log(`Ring 1: FAIL (${ring1Failures.length}/${ring1Rules.length} checks failed)`);
       const currentRing1Issues = extractRing1Issues(ring1Results);
 
       // Check convergence against previous Ring 1 issues.
@@ -340,6 +354,7 @@ export function refine(
           timestamp: new Date().toISOString(),
         });
 
+        log(`Ring 1: convergence detected — escalating`);
         return { escalated: true, report };
       }
 
@@ -347,8 +362,7 @@ export function refine(
       previousRing1Issues = currentRing1Issues;
 
       // Fix semantic issues and write back to disk.
-      // fixSemantic needs parent content; pass empty string as placeholder
-      // since parent resolution is handled by the orchestrator.
+      log(`Ring 1: applying semantic fix...`);
       const fixed = fixSemantic(documentContent, ring1Results, "", config);
       fs.writeFileSync(documentPath, fixed, "utf-8");
 
@@ -365,20 +379,27 @@ export function refine(
       continue;
     }
 
+    log(`Ring 1: PASS`);
+
     // --- Ring 2: Quality rubric ---
     const ring2Rules = RING2_RULES[level];
-    const ring2Results = ring2Rules.map((ruleId) =>
-      runRing2Check(ruleId, documentContent, level, config),
-    );
+    log(`Ring 2: running ${ring2Rules.length} checks (${ring2Rules.join(', ')})...`);
+    const ring2Results = ring2Rules.map((ruleId) => {
+      log(`  Ring 2: ${ruleId}...`);
+      const r = runRing2Check(ruleId, documentContent, level, config);
+      log(`  Ring 2: ${ruleId} → ${r.verdict}`);
+      return r;
+    });
 
     const ring2Failures = ring2Results.filter((r) => r.verdict === "fail");
 
     if (ring2Failures.length === 0) {
-      // All three rings pass — promote.
+      log(`Ring 2: PASS — all rings passed, promoting document`);
       return { promoted: true };
     }
 
     // Ring 2 has failures.
+    log(`Ring 2: FAIL (${ring2Failures.length}/${ring2Rules.length} checks failed)`);
     const currentRing2Issues = extractRing2Issues(ring2Results);
 
     // Check convergence against previous Ring 2 issues.
@@ -401,6 +422,7 @@ export function refine(
         timestamp: new Date().toISOString(),
       });
 
+      log(`Ring 2: convergence detected — escalating`);
       return { escalated: true, report };
     }
 
@@ -408,6 +430,7 @@ export function refine(
     previousRing2Issues = currentRing2Issues;
 
     // Fix quality issues and write back to disk.
+    log(`Ring 2: applying quality fix...`);
     const fixed = fixQuality(documentContent, ring2Results, config);
     fs.writeFileSync(documentPath, fixed, "utf-8");
 
@@ -425,6 +448,7 @@ export function refine(
   }
 
   // Max iterations reached — escalate.
+  log(`Max iterations (${maxIterations}) reached — escalating`);
   const lastDocumentContent = fs.readFileSync(documentPath, "utf-8");
   // Collect all unresolved issues from the last available data.
   const unresolvedIssues: IssuePair[] = [
