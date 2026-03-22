@@ -1,0 +1,13 @@
+{
+  "id": "impl-3c8d5e0a",
+  "spec_sections": [
+    "spec-fa3a90b8#document-hierarchy-and-structure",
+    "spec-fa3a90b8#implementation-documents",
+    "spec-fa3a90b8#cross-level-invariants"
+  ],
+  "description": "impl-3c8d5e0a.md",
+  "atomic_tasks": [],
+  "modules": ["impl-schema", "impl-validation"],
+  "dependencies": ["impl-7e2a9f1b"],
+  "status": "draft"
+}

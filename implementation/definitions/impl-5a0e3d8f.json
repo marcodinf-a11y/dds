@@ -1,0 +1,17 @@
+{
+  "id": "impl-5a0e3d8f",
+  "spec_sections": [
+    "spec-fa3a90b8#validation-rings",
+    "spec-fa3a90b8#refinement-and-escalation",
+    "spec-fa3a90b8#cross-level-invariants",
+    "spec-fa3a90b8#pipeline-orchestration",
+    "spec-fa3a90b8#document-decomposition",
+    "spec-fa3a90b8#non-functional-requirements",
+    "spec-fa3a90b8#system-constraints"
+  ],
+  "description": "impl-5a0e3d8f.md",
+  "atomic_tasks": [],
+  "modules": ["pipeline", "refinement", "escalation", "decomposition", "reporting"],
+  "dependencies": ["impl-7e2a9f1b", "impl-3c8d5e0a", "impl-9f4b1c7d"],
+  "status": "draft"
+}

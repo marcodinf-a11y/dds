@@ -1,0 +1,14 @@
+{
+  "id": "impl-9f4b1c7d",
+  "spec_sections": [
+    "spec-fa3a90b8#document-hierarchy-and-structure",
+    "spec-fa3a90b8#atomic-tasks",
+    "spec-fa3a90b8#acceptance-criteria-and-execution",
+    "spec-fa3a90b8#cross-level-invariants"
+  ],
+  "description": "impl-9f4b1c7d.md",
+  "atomic_tasks": [],
+  "modules": ["task-schema", "task-validation", "execution-records"],
+  "dependencies": ["impl-3c8d5e0a"],
+  "status": "draft"
+}
