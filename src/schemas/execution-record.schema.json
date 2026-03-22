@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecutionRecord",
+  "type": "object",
+  "required": ["task_id", "run", "status", "criteria_results", "started_at"],
+  "additionalProperties": false,
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^at-[0-9a-f]{8}$",
+      "description": "References the atomic task definition."
+    },
+    "run": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Run number. Increments with each retry of the same task."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "completed", "failed", "abandoned"],
+      "description": "Current status of this execution run."
+    },
+    "criteria_results": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/CriterionResult" },
+      "description": "Per-criterion pass/fail results."
+    },
+    "commits": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Git commit SHAs produced during this run."
+    },
+    "scope_violations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Files modified outside declared scope. Empty if respected."
+    },
+    "agent_notes": {
+      "type": "string",
+      "description": "Filename of the agent's reasoning log markdown."
+    },
+    "token_usage": {
+      "type": "integer",
+      "description": "Total tokens consumed during this run."
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Null if still in progress."
+    }
+  },
+  "definitions": {
+    "CriterionResult": {
+      "type": "object",
+      "required": ["criterion_id", "verdict"],
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "type": "string",
+          "pattern": "^ac-[0-9a-f]{8}$"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["pass", "fail", "skipped"]
+        },
+        "output": {
+          "type": "string",
+          "description": "Captured stdout/stderr for machine-verifiable criteria, or LLM verdict text for review criteria."
+        }
+      }
+    }
+  }
+}

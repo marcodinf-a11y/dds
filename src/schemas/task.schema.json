@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AtomicTaskDefinition",
+  "type": "object",
+  "required": [
+    "id", "parent", "description", "blocked_by", "blocks",
+    "scope", "acceptance_criteria", "context_refs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^at-[0-9a-f]{8}$",
+      "description": "Unique identifier. Generated as 8 random hex characters with 'at-' prefix."
+    },
+    "parent": {
+      "type": "string",
+      "pattern": "^impl-[0-9a-f]{8}$",
+      "description": "ID of the implementation document this task was decomposed from."
+    },
+    "description": {
+      "type": "string",
+      "pattern": "^at-[0-9a-f]{8}\\.md$",
+      "description": "Filename of the markdown description document for this task."
+    },
+    "blocked_by": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^at-[0-9a-f]{8}$"
+      },
+      "description": "Task IDs that must be completed before this task can start."
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^at-[0-9a-f]{8}$"
+      },
+      "description": "Task IDs that cannot start until this task is completed."
+    },
+    "scope": {
+      "type": "object",
+      "required": ["files", "modules"],
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Exhaustive list of files the agent is permitted to modify. ENFORCED by the harness — changes outside scope are rejected."
+        },
+        "modules": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Logical modules this task operates within. Must be a subset of the parent impl doc's modules."
+        }
+      },
+      "description": "Enforced scope boundary."
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/AcceptanceCriterion" },
+      "minItems": 1,
+      "description": "Criteria that must ALL pass for the task to be considered complete."
+    },
+    "context_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "References to spec sections this task fulfills. Format: spec-XXXXXXXX#heading-slug"
+    }
+  },
+  "definitions": {
+    "AcceptanceCriterion": {
+      "oneOf": [
+        { "$ref": "#/definitions/TestCriterion" },
+        { "$ref": "#/definitions/BuildCriterion" },
+        { "$ref": "#/definitions/LintCriterion" },
+        { "$ref": "#/definitions/ReviewCriterion" }
+      ]
+    },
+    "TestCriterion": {
+      "type": "object",
+      "required": ["id", "type", "description", "verify"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^ac-[0-9a-f]{8}$" },
+        "type": { "type": "string", "enum": ["test"] },
+        "description": { "type": "string" },
+        "verify": {
+          "type": "string",
+          "description": "Shell command to execute. Exit code 0 means pass."
+        }
+      }
+    },
+    "BuildCriterion": {
+      "type": "object",
+      "required": ["id", "type", "description", "verify"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^ac-[0-9a-f]{8}$" },
+        "type": { "type": "string", "enum": ["build"] },
+        "description": { "type": "string" },
+        "verify": {
+          "type": "string",
+          "description": "Shell command to execute. Exit code 0 means pass."
+        }
+      }
+    },
+    "LintCriterion": {
+      "type": "object",
+      "required": ["id", "type", "description", "verify"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^ac-[0-9a-f]{8}$" },
+        "type": { "type": "string", "enum": ["lint"] },
+        "description": { "type": "string" },
+        "verify": {
+          "type": "string",
+          "description": "Shell command to execute. Exit code 0 means pass."
+        }
+      }
+    },
+    "ReviewCriterion": {
+      "type": "object",
+      "required": ["id", "type", "description", "rubric"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^ac-[0-9a-f]{8}$" },
+        "type": { "type": "string", "enum": ["review"] },
+        "description": { "type": "string" },
+        "rubric": {
+          "type": "string",
+          "description": "Evaluation prompt for the LLM-as-judge. Must be specific enough to produce a binary pass/fail verdict with evidence."
+        }
+      }
+    }
+  }
+}
