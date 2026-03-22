@@ -3,24 +3,12 @@ import AjvModule from 'ajv';
 import type { TaskDefinition, ExecutionRecord } from '../../types/definitions.js';
 import { extractHeadings } from '../../parsers/markdown.js';
 import { detectCycle } from '../../parsers/graph.js';
+import type { Ring0RuleResult, Ring0Result } from '../../types/results.js';
 
 const Ajv = AjvModule.default ?? AjvModule;
 const require = createRequire(import.meta.url);
 const taskSchema = require('../../schemas/task.schema.json') as Record<string, unknown>;
 const executionRecordSchema = require('../../schemas/execution-record.schema.json') as Record<string, unknown>;
-
-// --- Result types ---
-
-export interface RuleResult {
-  rule: string;
-  pass: boolean;
-  message: string;
-}
-
-export interface Ring0Result {
-  valid: boolean;
-  results: RuleResult[];
-}
 
 // --- Context interfaces ---
 
@@ -59,13 +47,13 @@ export function validateTaskRing0(
   markdown: string,
   context: TaskValidationContext,
 ): Ring0Result {
-  const results: RuleResult[] = [];
+  const results: Ring0RuleResult[] = [];
 
   // R0-T01: JSON validates against AtomicTaskDefinition schema
   const schemaValid = validateTaskSchema(task);
   results.push({
     rule: 'R0-T01',
-    pass: !!schemaValid,
+    passed: !!schemaValid,
     message: schemaValid
       ? 'Task JSON validates against schema'
       : `Schema validation failed: ${ajv.errorsText(validateTaskSchema.errors)}`,
@@ -75,7 +63,7 @@ export function validateTaskRing0(
   const idUnique = !context.existingTaskIds.has(task.id);
   results.push({
     rule: 'R0-T02',
-    pass: idUnique,
+    passed: idUnique,
     message: idUnique
       ? `Task ID ${task.id} is unique`
       : `Task ID ${task.id} already exists`,
@@ -85,7 +73,7 @@ export function validateTaskRing0(
   const parentValid = task.parent === context.parentImplId;
   results.push({
     rule: 'R0-T03',
-    pass: parentValid,
+    passed: parentValid,
     message: parentValid
       ? `Parent ${task.parent} is valid`
       : `Parent ${task.parent} does not match expected ${context.parentImplId}`,
@@ -94,7 +82,7 @@ export function validateTaskRing0(
   // R0-T04: Description file exists
   results.push({
     rule: 'R0-T04',
-    pass: context.descriptionFileExists,
+    passed: context.descriptionFileExists,
     message: context.descriptionFileExists
       ? `Description file ${task.description} exists`
       : `Description file ${task.description} not found`,
@@ -108,7 +96,7 @@ export function validateTaskRing0(
   const invalidBlockedBy = task.blocked_by.filter((id) => !siblingIds.has(id));
   results.push({
     rule: 'R0-T05',
-    pass: invalidBlockedBy.length === 0,
+    passed: invalidBlockedBy.length === 0,
     message:
       invalidBlockedBy.length === 0
         ? 'All blocked_by references are valid'
@@ -119,7 +107,7 @@ export function validateTaskRing0(
   const invalidBlocks = task.blocks.filter((id) => !siblingIds.has(id));
   results.push({
     rule: 'R0-T06',
-    pass: invalidBlocks.length === 0,
+    passed: invalidBlocks.length === 0,
     message:
       invalidBlocks.length === 0
         ? 'All blocks references are valid'
@@ -146,7 +134,7 @@ export function validateTaskRing0(
   }
   results.push({
     rule: 'R0-T07',
-    pass: symmetryErrors.length === 0,
+    passed: symmetryErrors.length === 0,
     message:
       symmetryErrors.length === 0
         ? 'Dependency symmetry invariant holds'
@@ -164,7 +152,7 @@ export function validateTaskRing0(
   const cycle = detectCycle(adjacencyList);
   results.push({
     rule: 'R0-T08',
-    pass: cycle === null,
+    passed: cycle === null,
     message:
       cycle === null
         ? 'Dependency graph is acyclic'
@@ -177,7 +165,7 @@ export function validateTaskRing0(
   const criteriaUnique = criteriaIds.length === uniqueCriteriaIds.size;
   results.push({
     rule: 'R0-T09',
-    pass: criteriaUnique,
+    passed: criteriaUnique,
     message: criteriaUnique
       ? 'All acceptance criteria IDs are unique'
       : 'Duplicate acceptance criteria IDs found',
@@ -192,7 +180,7 @@ export function validateTaskRing0(
   );
   results.push({
     rule: 'R0-T10',
-    pass: missingVerify.length === 0,
+    passed: missingVerify.length === 0,
     message:
       missingVerify.length === 0
         ? 'All test/build/lint criteria have verify field'
@@ -207,7 +195,7 @@ export function validateTaskRing0(
   );
   results.push({
     rule: 'R0-T11',
-    pass: missingRubric.length === 0,
+    passed: missingRubric.length === 0,
     message:
       missingRubric.length === 0
         ? 'All review criteria have rubric field'
@@ -218,7 +206,7 @@ export function validateTaskRing0(
   const hasFiles = task.scope.files.length >= 1;
   results.push({
     rule: 'R0-T12',
-    pass: hasFiles,
+    passed: hasFiles,
     message: hasFiles
       ? 'scope.files is non-empty'
       : 'scope.files is empty',
@@ -228,7 +216,7 @@ export function validateTaskRing0(
   const hasRefs = task.context_refs.length >= 1;
   results.push({
     rule: 'R0-T13',
-    pass: hasRefs,
+    passed: hasRefs,
     message: hasRefs
       ? 'context_refs is non-empty'
       : 'context_refs is empty',
@@ -239,7 +227,7 @@ export function validateTaskRing0(
     task.blocked_by.includes(task.id) || task.blocks.includes(task.id);
   results.push({
     rule: 'R0-T14',
-    pass: !selfRef,
+    passed: !selfRef,
     message: selfRef
       ? `Self-reference found in dependencies for ${task.id}`
       : 'No self-references in dependencies',
@@ -256,7 +244,7 @@ export function validateTaskRing0(
   const h1Valid = h1 !== undefined && h1Pattern.test(h1.text);
   results.push({
     rule: 'R0-T20',
-    pass: h1Valid,
+    passed: h1Valid,
     message: h1Valid
       ? 'H1 matches required pattern'
       : `H1 does not match pattern "# at-XXXXXXXX: Title". Got: "${h1?.text ?? '(none)'}"`,
@@ -266,7 +254,7 @@ export function validateTaskRing0(
   const hasExactlyFiveH2 = h2s.length === 5;
   results.push({
     rule: 'R0-T21',
-    pass: hasExactlyFiveH2,
+    passed: hasExactlyFiveH2,
     message: hasExactlyFiveH2
       ? 'Exactly 5 H2 sections found'
       : `Expected 5 H2 sections, found ${h2s.length}`,
@@ -279,7 +267,7 @@ export function validateTaskRing0(
     h2Texts.every((text, i) => text === REQUIRED_H2_SECTIONS[i]);
   results.push({
     rule: 'R0-T22',
-    pass: h2OrderCorrect,
+    passed: h2OrderCorrect,
     message: h2OrderCorrect
       ? 'H2 sections are in correct order'
       : `H2 order mismatch. Expected: ${REQUIRED_H2_SECTIONS.join(', ')}. Got: ${h2Texts.join(', ')}`,
@@ -289,7 +277,7 @@ export function validateTaskRing0(
   const emptyH2s = h2s.filter((h) => h.content.length === 0);
   results.push({
     rule: 'R0-T23',
-    pass: emptyH2s.length === 0,
+    passed: emptyH2s.length === 0,
     message:
       emptyH2s.length === 0
         ? 'All H2 sections have content'
@@ -301,14 +289,14 @@ export function validateTaskRing0(
   const h1IdMatch = h1Id === task.id;
   results.push({
     rule: 'R0-T24',
-    pass: h1IdMatch,
+    passed: h1IdMatch,
     message: h1IdMatch
       ? 'H1 task ID matches definition ID'
       : `H1 task ID "${h1Id ?? '(none)'}" does not match definition ID "${task.id}"`,
   });
 
   return {
-    valid: results.every((r) => r.pass),
+    valid: results.every((r) => r.passed),
     results,
   };
 }
@@ -319,13 +307,13 @@ export function validateExecutionRecord(
   record: ExecutionRecord,
   context: ExecutionRecordContext,
 ): Ring0Result {
-  const results: RuleResult[] = [];
+  const results: Ring0RuleResult[] = [];
 
   // R0-T30: JSON validates against ExecutionRecord schema
   const schemaValid = validateExecSchema(record);
   results.push({
     rule: 'R0-T30',
-    pass: !!schemaValid,
+    passed: !!schemaValid,
     message: schemaValid
       ? 'Execution record validates against schema'
       : `Schema validation failed: ${ajv.errorsText(validateExecSchema.errors)}`,
@@ -335,7 +323,7 @@ export function validateExecutionRecord(
   const taskIdValid = record.task_id === context.taskDefinition.id;
   results.push({
     rule: 'R0-T31',
-    pass: taskIdValid,
+    passed: taskIdValid,
     message: taskIdValid
       ? `task_id ${record.task_id} references valid task`
       : `task_id ${record.task_id} does not match task definition ${context.taskDefinition.id}`,
@@ -349,7 +337,7 @@ export function validateExecutionRecord(
   const runSequential = record.run === maxRun + 1;
   results.push({
     rule: 'R0-T32',
-    pass: runSequential,
+    passed: runSequential,
     message: runSequential
       ? `Run ${record.run} is sequential (previous max: ${maxRun})`
       : `Run ${record.run} is not sequential. Expected ${maxRun + 1}`,
@@ -364,7 +352,7 @@ export function validateExecutionRecord(
   );
   results.push({
     rule: 'R0-T33',
-    pass: invalidCriteria.length === 0,
+    passed: invalidCriteria.length === 0,
     message:
       invalidCriteria.length === 0
         ? 'All criterion_ids reference valid criteria'
@@ -377,14 +365,14 @@ export function validateExecutionRecord(
   const noDuplicates = criterionIds.length === uniqueIds.size;
   results.push({
     rule: 'R0-T34',
-    pass: noDuplicates,
+    passed: noDuplicates,
     message: noDuplicates
       ? 'No duplicate criterion_ids'
       : 'Duplicate criterion_ids found in criteria_results',
   });
 
   return {
-    valid: results.every((r) => r.pass),
+    valid: results.every((r) => r.passed),
     results,
   };
 }

@@ -3,23 +3,11 @@ import AjvModule from 'ajv';
 import type { ImplDefinition } from '../../types/definitions.js';
 import { extractHeadings } from '../../parsers/markdown.js';
 import { buildAdjacencyList, detectCycles } from '../../parsers/graph.js';
+import type { Ring0RuleResult, Ring0Result } from '../../types/results.js';
 
 const Ajv = AjvModule.default ?? AjvModule;
 const require = createRequire(import.meta.url);
 const implSchema = require('../../schemas/impl.schema.json') as Record<string, unknown>;
-
-// --- Result types (re-exported from task ring0 pattern) ---
-
-export interface RuleResult {
-  rule: string;
-  pass: boolean;
-  message: string;
-}
-
-export interface Ring0Result {
-  valid: boolean;
-  results: RuleResult[];
-}
 
 // --- Context interface ---
 
@@ -62,7 +50,7 @@ export function validateImplRing0(
   markdown: string,
   context: ImplValidationContext,
 ): Ring0Result {
-  const results: RuleResult[] = [];
+  const results: Ring0RuleResult[] = [];
 
   // =====================
   // JSON/Definition checks
@@ -72,7 +60,7 @@ export function validateImplRing0(
   const schemaValid = validateImplSchema(impl);
   results.push({
     rule: 'R0-I40',
-    pass: !!schemaValid,
+    passed: !!schemaValid,
     message: schemaValid
       ? 'Impl JSON validates against schema'
       : `Schema validation failed: ${ajv.errorsText(validateImplSchema.errors)}`,
@@ -82,7 +70,7 @@ export function validateImplRing0(
   const idUnique = !context.existingImplIds.includes(impl.id);
   results.push({
     rule: 'R0-I41',
-    pass: idUnique,
+    passed: idUnique,
     message: idUnique
       ? `Impl ID ${impl.id} is unique`
       : `Impl ID ${impl.id} already exists`,
@@ -93,7 +81,7 @@ export function validateImplRing0(
   const descValid = descPattern.test(impl.description);
   results.push({
     rule: 'R0-I42',
-    pass: descValid,
+    passed: descValid,
     message: descValid
       ? `Description "${impl.description}" matches required pattern`
       : `Description "${impl.description}" does not match pattern impl-XXXXXXXX.md`,
@@ -106,7 +94,7 @@ export function validateImplRing0(
   );
   results.push({
     rule: 'R0-I43',
-    pass: invalidSpecSections.length === 0,
+    passed: invalidSpecSections.length === 0,
     message:
       invalidSpecSections.length === 0
         ? 'All spec_sections entries match required format'
@@ -120,7 +108,7 @@ export function validateImplRing0(
   );
   results.push({
     rule: 'R0-I44',
-    pass: invalidTasks.length === 0,
+    passed: invalidTasks.length === 0,
     message:
       invalidTasks.length === 0
         ? 'All atomic_tasks references are valid'
@@ -134,7 +122,7 @@ export function validateImplRing0(
   );
   results.push({
     rule: 'R0-I45',
-    pass: invalidDeps.length === 0,
+    passed: invalidDeps.length === 0,
     message:
       invalidDeps.length === 0
         ? 'All dependencies references are valid'
@@ -145,7 +133,7 @@ export function validateImplRing0(
   const selfRef = dependencies.includes(impl.id);
   results.push({
     rule: 'R0-I46',
-    pass: !selfRef,
+    passed: !selfRef,
     message: selfRef
       ? `Self-reference found in dependencies for ${impl.id}`
       : 'No self-references in dependencies',
@@ -156,7 +144,7 @@ export function validateImplRing0(
   const cycles = detectCycles(adjacencyList);
   results.push({
     rule: 'R0-I47',
-    pass: cycles.length === 0,
+    passed: cycles.length === 0,
     message:
       cycles.length === 0
         ? 'Dependency graph is acyclic'
@@ -174,7 +162,7 @@ export function validateImplRing0(
   }
   results.push({
     rule: 'R0-I48',
-    pass: statusConsistent,
+    passed: statusConsistent,
     message: statusConsistent
       ? `Status "${impl.status}" is consistent with atomic_tasks (count: ${atomicTasks.length})`
       : `Status "${impl.status}" is inconsistent with atomic_tasks (count: ${atomicTasks.length})`,
@@ -192,7 +180,7 @@ export function validateImplRing0(
   }
   results.push({
     rule: 'R0-I50',
-    pass: parentMismatches.length === 0,
+    passed: parentMismatches.length === 0,
     message:
       parentMismatches.length === 0
         ? 'All tasks have correct parent reference'
@@ -216,7 +204,7 @@ export function validateImplRing0(
   }
   results.push({
     rule: 'R0-I51',
-    pass: moduleViolations.length === 0,
+    passed: moduleViolations.length === 0,
     message:
       moduleViolations.length === 0
         ? 'All task modules are subsets of impl modules'
@@ -237,7 +225,7 @@ export function validateImplRing0(
   const h1Valid = h1 !== undefined && h1Pattern.test(h1.text);
   results.push({
     rule: 'R0-I60',
-    pass: h1Valid,
+    passed: h1Valid,
     message: h1Valid
       ? 'H1 matches required pattern'
       : `H1 does not match pattern "# impl-XXXXXXXX: Title". Got: "${h1?.text ?? '(none)'}"`,
@@ -251,7 +239,7 @@ export function validateImplRing0(
     h2Texts.every((text, i) => text === REQUIRED_H2_SECTIONS[i]);
   results.push({
     rule: 'R0-I61',
-    pass: hasExactly7H2 && h2OrderCorrect,
+    passed: hasExactly7H2 && h2OrderCorrect,
     message:
       hasExactly7H2 && h2OrderCorrect
         ? 'Exactly 7 H2 sections in correct order'
@@ -262,7 +250,7 @@ export function validateImplRing0(
   const emptyH2s = h2s.filter((h) => h.content.trim().length === 0);
   results.push({
     rule: 'R0-I62',
-    pass: emptyH2s.length === 0,
+    passed: emptyH2s.length === 0,
     message:
       emptyH2s.length === 0
         ? 'All H2 sections have content'
@@ -287,7 +275,7 @@ export function validateImplRing0(
     h3sInDecomp.every((text, i) => text === REQUIRED_H3_DECOMPOSITION[i]);
   results.push({
     rule: 'R0-I63',
-    pass: h3OrderCorrect,
+    passed: h3OrderCorrect,
     message: h3OrderCorrect
       ? 'Decomposition Notes has exactly 3 H3 subsections in correct order'
       : `Expected 3 H3 subsections [${REQUIRED_H3_DECOMPOSITION.join(', ')}]. Got ${h3sInDecomp.length}: [${h3sInDecomp.join(', ')}]`,
@@ -298,7 +286,7 @@ export function validateImplRing0(
   const h1IdMatch = h1Id === impl.id;
   results.push({
     rule: 'R0-I64',
-    pass: h1IdMatch,
+    passed: h1IdMatch,
     message: h1IdMatch
       ? 'H1 impl ID matches definition ID'
       : `H1 impl ID "${h1Id ?? '(none)'}" does not match definition ID "${impl.id}"`,
@@ -312,7 +300,7 @@ export function validateImplRing0(
   const hasReqEntries = reqMatches !== null && reqMatches.length > 0;
   results.push({
     rule: 'R0-I66',
-    pass: hasReqEntries,
+    passed: hasReqEntries,
     message: hasReqEntries
       ? `Found ${reqMatches!.length} REQ-XX entries in Requirements section`
       : 'No REQ-XX entries found in Requirements section',
@@ -335,7 +323,7 @@ export function validateImplRing0(
   }
   results.push({
     rule: 'R0-I67',
-    pass: reqEntriesWithoutRef.length === 0,
+    passed: reqEntriesWithoutRef.length === 0,
     message:
       reqEntriesWithoutRef.length === 0
         ? 'All REQ-XX entries have spec section references'
@@ -343,7 +331,7 @@ export function validateImplRing0(
   });
 
   return {
-    valid: results.every((r) => r.pass),
+    valid: results.every((r) => r.passed),
     results,
   };
 }

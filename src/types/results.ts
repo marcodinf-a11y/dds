@@ -9,24 +9,27 @@ export interface Ring0Result {
   valid: boolean;
 }
 
+export interface Ring1Issue {
+  reference: string;
+  description: string;
+}
+
 export interface Ring1CheckResult {
   check: string;
   verdict: string;
-  issues: string[];
+  issues: Ring1Issue[];
 }
 
-export interface Ring1Result {
-  results: Ring1CheckResult[];
+export interface Ring2Evidence {
+  reference: string;
+  finding: string;
+  assessment: string;
 }
 
 export interface Ring2CheckResult {
   check: string;
   dimension: string;
   verdict: string;
-  evidence: string;
+  evidence: Ring2Evidence[];
   summary: string;
-}
-
-export interface Ring2Result {
-  results: Ring2CheckResult[];
 }

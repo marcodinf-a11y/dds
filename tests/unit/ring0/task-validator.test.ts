@@ -78,7 +78,7 @@ function makeValidContext(overrides?: Partial<TaskValidationContext>): TaskValid
   };
 }
 
-function findRule(results: { rule: string; pass: boolean; message: string }[], rule: string) {
+function findRule(results: { rule: string; passed: boolean; message?: string }[], rule: string) {
   return results.find((r) => r.rule === rule);
 }
 
@@ -90,7 +90,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
   it('passes for a valid task definition', () => {
     const result = validateTaskRing0(validTask, validMarkdown, makeValidContext());
     expect(result.valid).toBe(true);
-    expect(result.results.every((r) => r.pass)).toBe(true);
+    expect(result.results.every((r) => r.passed)).toBe(true);
   });
 
   it('R0-T01: fails for schema violation (missing scope)', () => {
@@ -98,7 +98,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [badTask] });
     const result = validateTaskRing0(badTask, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T01');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Schema validation failed');
   });
 
@@ -107,14 +107,14 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [badTask] });
     const result = validateTaskRing0(badTask, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T01');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
   });
 
   it('R0-T02: fails for duplicate task ID', () => {
     const ctx = makeValidContext({ existingTaskIds: new Set([validTask.id]) });
     const result = validateTaskRing0(validTask, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T02');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('already exists');
   });
 
@@ -122,7 +122,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ parentImplId: 'impl-00000000' });
     const result = validateTaskRing0(validTask, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T03');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('does not match');
   });
 
@@ -130,7 +130,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ descriptionFileExists: false });
     const result = validateTaskRing0(validTask, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T04');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('not found');
   });
 
@@ -143,7 +143,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T05');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('at-99999999');
   });
 
@@ -156,7 +156,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T06');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('at-99999999');
   });
 
@@ -166,7 +166,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [taskA, taskB] });
     const result = validateTaskRing0(taskA, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T07');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('blocked_by missing');
   });
 
@@ -186,7 +186,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [taskA, taskC] });
     const result = validateTaskRing0(taskA, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T07');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('blocks missing');
   });
 
@@ -212,7 +212,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [taskA, taskB, taskC] });
     const result = validateTaskRing0(taskA, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T07');
-    expect(rule?.pass).toBe(true);
+    expect(rule?.passed).toBe(true);
   });
 
   it('R0-T08: fails for cyclic dependencies (A->B->C->A)', () => {
@@ -222,7 +222,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [taskA, taskB, taskC] });
     const result = validateTaskRing0(taskA, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T08');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Cycle detected');
   });
 
@@ -242,7 +242,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [taskA, taskB] });
     const result = validateTaskRing0(taskA, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T08');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Cycle detected');
   });
 
@@ -268,7 +268,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [taskA, taskB, taskC] });
     const result = validateTaskRing0(taskA, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T08');
-    expect(rule?.pass).toBe(true);
+    expect(rule?.passed).toBe(true);
   });
 
   it('R0-T09: fails for duplicate criterion IDs', () => {
@@ -276,7 +276,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T09');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Duplicate');
   });
 
@@ -296,7 +296,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T10');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Missing verify');
   });
 
@@ -310,7 +310,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T10');
-    expect(rule?.pass).toBe(true);
+    expect(rule?.passed).toBe(true);
   });
 
   it('R0-T10: passes when lint criterion has verify', () => {
@@ -323,7 +323,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T10');
-    expect(rule?.pass).toBe(true);
+    expect(rule?.passed).toBe(true);
   });
 
   it('R0-T11: fails when review criterion missing rubric', () => {
@@ -340,7 +340,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T11');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Missing rubric');
   });
 
@@ -352,7 +352,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T12');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('empty');
   });
 
@@ -364,7 +364,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T13');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('empty');
   });
 
@@ -373,7 +373,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T14');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Self-reference');
   });
 
@@ -385,7 +385,7 @@ describe('R0-T01 through R0-T14: Task Definition Structural Checks', () => {
     const ctx = makeValidContext({ siblingTasks: [task, siblingBlocker] });
     const result = validateTaskRing0(task, validMarkdown, ctx);
     const rule = findRule(result.results, 'R0-T14');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Self-reference');
   });
 });
@@ -399,7 +399,7 @@ describe('R0-T20 through R0-T24: Task Description Markdown Checks', () => {
     const result = validateTaskRing0(validTask, validMarkdown, makeValidContext());
     for (const ruleId of ['R0-T20', 'R0-T21', 'R0-T22', 'R0-T23', 'R0-T24']) {
       const rule = findRule(result.results, ruleId);
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     }
   });
 
@@ -407,7 +407,7 @@ describe('R0-T20 through R0-T24: Task Description Markdown Checks', () => {
     const badMd = '# This is a bad title without ID\n\n## Objective\n\nSome text.\n\n## Context\n\nSome text.\n\n## Approach\n\nSome text.\n\n## Constraints\n\nSome text.\n\n## References\n\nSome text.';
     const result = validateTaskRing0(validTask, badMd, makeValidContext());
     const rule = findRule(result.results, 'R0-T20');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('does not match pattern');
   });
 
@@ -415,7 +415,7 @@ describe('R0-T20 through R0-T24: Task Description Markdown Checks', () => {
     const badMd = loadMarkdown('invalid/bad-markdown.md');
     const result = validateTaskRing0(validTask, badMd, makeValidContext());
     const rule = findRule(result.results, 'R0-T21');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
   });
 
   it('R0-T22: fails when H2 sections are in wrong order', () => {
@@ -442,7 +442,7 @@ Some constraints.
 Some references.`;
     const result = validateTaskRing0(validTask, badMd, makeValidContext());
     const rule = findRule(result.results, 'R0-T22');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('order mismatch');
   });
 
@@ -468,7 +468,7 @@ Some constraints.
 Some references.`;
     const result = validateTaskRing0(validTask, badMd, makeValidContext());
     const rule = findRule(result.results, 'R0-T23');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Empty H2');
   });
 
@@ -496,7 +496,7 @@ Some constraints.
 Some references.`;
     const result = validateTaskRing0(validTask, mismatchMd, makeValidContext());
     const rule = findRule(result.results, 'R0-T24');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('does not match definition ID');
   });
 });
@@ -517,7 +517,7 @@ describe('R0-T30 through R0-T34: Execution Record Checks', () => {
   it('passes for a valid execution record', () => {
     const result = validateExecutionRecord(validExecutionRecord, makeExecContext());
     expect(result.valid).toBe(true);
-    expect(result.results.every((r) => r.pass)).toBe(true);
+    expect(result.results.every((r) => r.passed)).toBe(true);
   });
 
   it('R0-T30: fails for schema violation in execution record', () => {
@@ -528,7 +528,7 @@ describe('R0-T30 through R0-T34: Execution Record Checks', () => {
     } as ExecutionRecord & { extra_field: string };
     const result = validateExecutionRecord(badRecord, makeExecContext());
     const rule = findRule(result.results, 'R0-T30');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Schema validation failed');
   });
 
@@ -539,14 +539,14 @@ describe('R0-T30 through R0-T34: Execution Record Checks', () => {
     };
     const result = validateExecutionRecord(record, makeExecContext());
     const rule = findRule(result.results, 'R0-T31');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('does not match task definition');
   });
 
   it('R0-T32: passes for first run (run=1, no prior records)', () => {
     const result = validateExecutionRecord(validExecutionRecord, makeExecContext());
     const rule = findRule(result.results, 'R0-T32');
-    expect(rule?.pass).toBe(true);
+    expect(rule?.passed).toBe(true);
   });
 
   it('R0-T32: passes for sequential run (run=2 with existing run=1)', () => {
@@ -557,7 +557,7 @@ describe('R0-T30 through R0-T34: Execution Record Checks', () => {
     const ctx = makeExecContext({ existingRecords: [validExecutionRecord] });
     const result = validateExecutionRecord(record, ctx);
     const rule = findRule(result.results, 'R0-T32');
-    expect(rule?.pass).toBe(true);
+    expect(rule?.passed).toBe(true);
   });
 
   it('R0-T32: fails for non-sequential run number (gap in runs)', () => {
@@ -566,7 +566,7 @@ describe('R0-T30 through R0-T34: Execution Record Checks', () => {
     const ctx = makeExecContext({ existingRecords: [validExecutionRecord] });
     const result = validateExecutionRecord(badRecord, ctx);
     const rule = findRule(result.results, 'R0-T32');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('not sequential');
   });
 
@@ -574,7 +574,7 @@ describe('R0-T30 through R0-T34: Execution Record Checks', () => {
     const orphanRecord = loadJson<ExecutionRecord>('invalid/orphan-criterion-record.json');
     const result = validateExecutionRecord(orphanRecord, makeExecContext());
     const rule = findRule(result.results, 'R0-T33');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('ac-99999999');
   });
 
@@ -588,7 +588,7 @@ describe('R0-T30 through R0-T34: Execution Record Checks', () => {
     };
     const result = validateExecutionRecord(record, makeExecContext());
     const rule = findRule(result.results, 'R0-T34');
-    expect(rule?.pass).toBe(false);
+    expect(rule?.passed).toBe(false);
     expect(rule?.message).toContain('Duplicate');
   });
 });

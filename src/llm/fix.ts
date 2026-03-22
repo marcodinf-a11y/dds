@@ -159,7 +159,7 @@ export function fixSemantic(
   const issuesDescription = failingIssues
     .map((i) => {
       const issueList =
-        i.issues.length > 0 ? i.issues.map((d) => `    - ${d}`).join('\n') : '    (no details)';
+        i.issues.length > 0 ? i.issues.map((d) => `    - [${d.reference}] ${d.description}`).join('\n') : '    (no details)';
       return `- [${i.check}] verdict=${i.verdict}\n${issueList}`;
     })
     .join('\n');
@@ -210,8 +210,10 @@ export function fixQuality(
 
   const issuesDescription = failingIssues
     .map(
-      (i) =>
-        `- [${i.check}] dimension="${i.dimension}" verdict=${i.verdict}\n    evidence: ${i.evidence}\n    summary: ${i.summary}`,
+      (i) => {
+        const evidenceList = i.evidence.map((e) => `      - [${e.reference}] ${e.finding} (${e.assessment})`).join('\n');
+        return `- [${i.check}] dimension="${i.dimension}" verdict=${i.verdict}\n    evidence:\n${evidenceList}\n    summary: ${i.summary}`;
+      },
     )
     .join('\n');
 

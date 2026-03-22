@@ -124,8 +124,8 @@ interface SpecImplCrossLevelResult {
 }
 
 interface ImplTaskCrossLevelResult {
-  pass: boolean;
-  checks: Array<{ rule: string; pass: boolean; message: string }>;
+  passed: boolean;
+  checks: Array<{ rule: string; passed: boolean; message: string }>;
 }
 
 async function runSpecImplCrossLevel(
@@ -181,8 +181,8 @@ async function runImplTaskCrossLevel(
     );
     return result.checks.map((c) => ({
       rule: c.rule,
-      passed: c.pass,
-      issues: c.pass
+      passed: c.passed,
+      issues: c.passed
         ? []
         : [{ rule: c.rule, reference: c.rule, description: c.message }],
     }));

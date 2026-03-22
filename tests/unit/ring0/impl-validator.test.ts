@@ -68,7 +68,7 @@ function makeValidContext(overrides?: Partial<ImplValidationContext>): ImplValid
   };
 }
 
-function findRule(results: { rule: string; pass: boolean; message: string }[], rule: string) {
+function findRule(results: { rule: string; passed: boolean; message?: string }[], rule: string) {
   return results.find((r) => r.rule === rule);
 }
 
@@ -187,7 +187,7 @@ describe('validateImplRing0', () => {
     it('passes all rules for a valid impl document', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       expect(result.valid).toBe(true);
-      expect(result.results.every((r) => r.pass)).toBe(true);
+      expect(result.results.every((r) => r.passed)).toBe(true);
     });
   });
 
@@ -195,14 +195,14 @@ describe('validateImplRing0', () => {
     it('passes when valid JSON matches schema', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I40');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when required field is missing', () => {
       const badImpl = makeMissingRequiredField() as unknown as ImplDefinition;
       const result = validateImplRing0(badImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I40');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('Schema validation failed');
     });
 
@@ -210,7 +210,7 @@ describe('validateImplRing0', () => {
       const badImpl = makeWrongTypeId() as unknown as ImplDefinition;
       const result = validateImplRing0(badImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I40');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
     });
   });
 
@@ -218,14 +218,14 @@ describe('validateImplRing0', () => {
     it('passes when ID is unique', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I41');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when ID already exists', () => {
       const ctx = makeValidContext(makeDuplicateIdContext());
       const result = validateImplRing0(validImpl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I41');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('already exists');
     });
   });
@@ -234,14 +234,14 @@ describe('validateImplRing0', () => {
     it('passes when description matches impl-XXXXXXXX.md pattern', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I42');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when description does not match pattern', () => {
       const badImpl = makeWrongDescriptionPattern();
       const result = validateImplRing0(badImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I42');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('does not match pattern');
     });
   });
@@ -250,14 +250,14 @@ describe('validateImplRing0', () => {
     it('passes when all spec_sections match format', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I43');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when spec_sections entry has invalid format', () => {
       const badImpl = makeInvalidSpecSections();
       const result = validateImplRing0(badImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I43');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('Invalid spec_sections');
     });
   });
@@ -266,14 +266,14 @@ describe('validateImplRing0', () => {
     it('passes when atomic_tasks is empty (draft status)', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I44');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when atomic_tasks references non-existent task', () => {
       const badImpl = makeInvalidAtomicTasksRef();
       const result = validateImplRing0(badImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I44');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('at-99999999');
     });
 
@@ -286,7 +286,7 @@ describe('validateImplRing0', () => {
       const ctx = makeValidContext({ existingTaskIds: ['at-00000001'] });
       const result = validateImplRing0(impl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I44');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
   });
 
@@ -294,14 +294,14 @@ describe('validateImplRing0', () => {
     it('passes when all dependencies reference existing impls', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I45');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when dependencies references non-existent impl', () => {
       const badImpl = makeInvalidDependenciesRef();
       const result = validateImplRing0(badImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I45');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('impl-99999999');
     });
   });
@@ -310,7 +310,7 @@ describe('validateImplRing0', () => {
     it('passes when no self-reference', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I46');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when dependency contains self-reference', () => {
@@ -318,7 +318,7 @@ describe('validateImplRing0', () => {
       const ctx = makeValidContext({ existingImplIds: ['impl-00000001', 'impl-00000002'] });
       const result = validateImplRing0(badImpl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I46');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('Self-reference');
     });
   });
@@ -330,7 +330,7 @@ describe('validateImplRing0', () => {
       });
       const result = validateImplRing0(validImpl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I47');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when dependency graph has a cycle', () => {
@@ -340,14 +340,14 @@ describe('validateImplRing0', () => {
       });
       const result = validateImplRing0(validImpl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I47');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('Cycles detected');
     });
 
     it('passes when dependency graph is empty', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I47');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
   });
 
@@ -355,7 +355,7 @@ describe('validateImplRing0', () => {
     it('passes when draft status has empty atomic_tasks', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I48');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('passes when decomposed status has non-empty atomic_tasks', () => {
@@ -367,14 +367,14 @@ describe('validateImplRing0', () => {
       const ctx = makeValidContext({ existingTaskIds: ['at-00000001'] });
       const result = validateImplRing0(impl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I48');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when draft status has non-empty atomic_tasks', () => {
       const badImpl = makeDraftWithTasks();
       const result = validateImplRing0(badImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I48');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('inconsistent');
     });
 
@@ -382,7 +382,7 @@ describe('validateImplRing0', () => {
       const badImpl = makeDecomposedWithoutTasks();
       const result = validateImplRing0(badImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I48');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('inconsistent');
     });
   });
@@ -402,7 +402,7 @@ describe('validateImplRing0', () => {
       });
       const result = validateImplRing0(impl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I50');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when task has mismatched parent', () => {
@@ -410,7 +410,7 @@ describe('validateImplRing0', () => {
       const ctx = makeValidContext(makeParentMismatchContext());
       const result = validateImplRing0(impl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I50');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('Parent mismatch');
     });
   });
@@ -424,14 +424,14 @@ describe('validateImplRing0', () => {
       });
       const result = validateImplRing0(validImpl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I51');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when task has modules not in impl modules', () => {
       const ctx = makeValidContext(makeModuleViolationContext());
       const result = validateImplRing0(validImpl, validMarkdown, ctx);
       const rule = findRule(result.results, 'R0-I51');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('Module violations');
       expect(rule?.message).toContain('mod-c');
     });
@@ -445,13 +445,13 @@ describe('validateImplRing0', () => {
     it('passes when H1 matches impl-XXXXXXXX: Title', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I60');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when H1 does not match pattern', () => {
       const result = validateImplRing0(validImpl, markdownBadH1, makeValidContext());
       const rule = findRule(result.results, 'R0-I60');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('does not match pattern');
     });
   });
@@ -460,19 +460,19 @@ describe('validateImplRing0', () => {
     it('passes when all 7 H2 sections are present in order', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I61');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when H2 sections are in wrong order', () => {
       const result = validateImplRing0(validImpl, markdownWrongH2Order, makeValidContext());
       const rule = findRule(result.results, 'R0-I61');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
     });
 
     it('fails when H2 sections are missing', () => {
       const result = validateImplRing0(validImpl, markdownMissingH2, makeValidContext());
       const rule = findRule(result.results, 'R0-I61');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
     });
   });
 
@@ -513,13 +513,13 @@ Task boundaries, ordering rationale, and decomposition constraints as inline tex
 `;
       const result = validateImplRing0(validImpl, mdNoH3, makeValidContext());
       const rule = findRule(result.results, 'R0-I62');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when an H2 section is empty', () => {
       const result = validateImplRing0(validImpl, markdownEmptySection, makeValidContext());
       const rule = findRule(result.results, 'R0-I62');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('Empty H2');
     });
 
@@ -528,7 +528,7 @@ Task boundaries, ordering rationale, and decomposition constraints as inline tex
       // so Decomposition Notes is not reported as empty when it has H3 subsections.
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I62');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
       expect(rule?.message).toBe('All H2 sections have content');
     });
   });
@@ -539,20 +539,20 @@ Task boundaries, ordering rationale, and decomposition constraints as inline tex
       // so the H3 filter correctly finds all 3 required subsections.
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I63');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
       expect(rule?.message).toBe('Decomposition Notes has exactly 3 H3 subsections in correct order');
     });
 
     it('fails when H3 subsections are missing', () => {
       const result = validateImplRing0(validImpl, markdownMissingH3, makeValidContext());
       const rule = findRule(result.results, 'R0-I63');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
     });
 
     it('fails when extra H3 subsections are present', () => {
       const result = validateImplRing0(validImpl, markdownExtraH3, makeValidContext());
       const rule = findRule(result.results, 'R0-I63');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
     });
   });
 
@@ -560,13 +560,13 @@ Task boundaries, ordering rationale, and decomposition constraints as inline tex
     it('passes when H1 ID matches definition ID', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I64');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when H1 ID does not match definition ID', () => {
       const result = validateImplRing0(validImpl, markdownIdMismatch, makeValidContext());
       const rule = findRule(result.results, 'R0-I64');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('does not match definition ID');
     });
   });
@@ -575,13 +575,13 @@ Task boundaries, ordering rationale, and decomposition constraints as inline tex
     it('passes when REQ entries are present', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I66');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when no REQ entries are present', () => {
       const result = validateImplRing0(validImpl, markdownNoReq, makeValidContext());
       const rule = findRule(result.results, 'R0-I66');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('No REQ-XX entries');
     });
   });
@@ -590,13 +590,13 @@ Task boundaries, ordering rationale, and decomposition constraints as inline tex
     it('passes when all REQ entries have spec references', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I67');
-      expect(rule?.pass).toBe(true);
+      expect(rule?.passed).toBe(true);
     });
 
     it('fails when REQ entry is missing spec reference', () => {
       const result = validateImplRing0(validImpl, markdownReqWithoutRef, makeValidContext());
       const rule = findRule(result.results, 'R0-I67');
-      expect(rule?.pass).toBe(false);
+      expect(rule?.passed).toBe(false);
       expect(rule?.message).toContain('missing spec references');
     });
   });

@@ -127,7 +127,7 @@ function runRing0(
       );
 
       const failures = result.results
-        .filter((r) => !r.pass)
+        .filter((r) => !r.passed)
         .map((r) => ({
           rule: r.rule,
           passed: false,
@@ -166,17 +166,17 @@ function extractTaskIdFromPath(filePath: string): string {
 
 /**
  * Extract (rule, reference) pairs from Ring 1 check results for convergence
- * tracking. Each issue string from a Ring1CheckResult becomes a pair with
- * the check's rule ID and the issue text as reference.
+ * tracking. Each issue object from a Ring1CheckResult becomes a pair with
+ * the check's rule ID and the issue's reference field.
  */
 function extractRing1Issues(
-  results: Array<{ check: string; verdict: string; issues: string[] }>,
+  results: Array<{ check: string; verdict: string; issues: Array<{ reference: string; description: string }> }>,
 ): IssuePair[] {
   const pairs: IssuePair[] = [];
   for (const result of results) {
     if (result.verdict === "fail") {
       for (const issue of result.issues) {
-        pairs.push({ rule: result.check, reference: issue });
+        pairs.push({ rule: result.check, reference: issue.reference });
       }
     }
   }
@@ -185,20 +185,23 @@ function extractRing1Issues(
 
 /**
  * Extract (rule, reference) pairs from Ring 2 check results for convergence
- * tracking. Uses the check ID as rule and the summary as reference.
+ * tracking. Each evidence object from a Ring2CheckResult becomes a pair with
+ * the check's rule ID and the evidence's reference field.
  */
 function extractRing2Issues(
   results: Array<{
     check: string;
     verdict: string;
     summary: string;
-    evidence: string;
+    evidence: Array<{ reference: string; finding: string; assessment: string }>;
   }>,
 ): IssuePair[] {
   const pairs: IssuePair[] = [];
   for (const result of results) {
     if (result.verdict === "fail") {
-      pairs.push({ rule: result.check, reference: result.summary });
+      for (const ev of result.evidence) {
+        pairs.push({ rule: result.check, reference: ev.reference });
+      }
     }
   }
   return pairs;

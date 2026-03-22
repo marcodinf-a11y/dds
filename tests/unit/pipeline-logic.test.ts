@@ -110,16 +110,16 @@ function makeRing1Pass(check: string): Ring1CheckResult {
   return { check, verdict: 'pass', issues: [] };
 }
 
-function makeRing1Fail(check: string, issueTexts: string[]): Ring1CheckResult {
-  return { check, verdict: 'fail', issues: issueTexts };
+function makeRing1Fail(check: string, issueRefs: string[]): Ring1CheckResult {
+  return { check, verdict: 'fail', issues: issueRefs.map((ref) => ({ reference: ref, description: `Issue at ${ref}` })) };
 }
 
 function makeRing2Pass(check: string): Ring2CheckResult {
-  return { check, dimension: check, verdict: 'pass', evidence: '', summary: 'All good' };
+  return { check, dimension: check, verdict: 'pass', evidence: [], summary: 'All good' };
 }
 
 function makeRing2Fail(check: string, summary: string): Ring2CheckResult {
-  return { check, dimension: check, verdict: 'fail', evidence: 'evidence', summary };
+  return { check, dimension: check, verdict: 'fail', evidence: [{ reference: summary, finding: 'failing evidence', assessment: 'fail' }], summary };
 }
 
 // Cast mocked functions

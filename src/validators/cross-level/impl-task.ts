@@ -18,13 +18,13 @@ export interface TaskDefinitionMinimal {
 
 export interface ImplTaskCheckResult {
   rule: string;
-  pass: boolean;
+  passed: boolean;
   message: string;
 }
 
 export interface ImplTaskCrossLevelResult {
   checks: ImplTaskCheckResult[];
-  pass: boolean;
+  passed: boolean;
 }
 
 /**
@@ -56,7 +56,7 @@ function validateCLT01(
     if (!parentImpl) {
       checks.push({
         rule: 'CL-T01',
-        pass: false,
+        passed: false,
         message: `Task ${task.id} references parent ${task.parent} which does not exist`,
       });
       continue;
@@ -65,7 +65,7 @@ function validateCLT01(
     if (!listedTasks.includes(task.id)) {
       checks.push({
         rule: 'CL-T01',
-        pass: false,
+        passed: false,
         message: `Task ${task.id} has parent ${task.parent}, but that impl doc does not list ${task.id} in atomic_tasks`,
       });
     }
@@ -79,7 +79,7 @@ function validateCLT01(
       if (!task) {
         checks.push({
           rule: 'CL-T01',
-          pass: false,
+          passed: false,
           message: `Impl doc ${impl.id} lists task ${taskId} in atomic_tasks, but that task does not exist`,
         });
         continue;
@@ -87,7 +87,7 @@ function validateCLT01(
       if (task.parent !== impl.id) {
         checks.push({
           rule: 'CL-T01',
-          pass: false,
+          passed: false,
           message: `Impl doc ${impl.id} lists task ${taskId} in atomic_tasks, but that task's parent is ${task.parent}`,
         });
       }
@@ -97,7 +97,7 @@ function validateCLT01(
   if (checks.length === 0) {
     checks.push({
       rule: 'CL-T01',
-      pass: true,
+      passed: true,
       message: 'All parent-task references are bidirectionally consistent',
     });
   }
@@ -129,7 +129,7 @@ function validateCLT02(
     if (existingTasks.length === 0) {
       checks.push({
         rule: 'CL-T02',
-        pass: false,
+        passed: false,
         message: `Impl doc ${impl.id} has status 'decomposed' but has no existing atomic tasks`,
       });
     }
@@ -138,7 +138,7 @@ function validateCLT02(
   if (checks.length === 0) {
     checks.push({
       rule: 'CL-T02',
-      pass: true,
+      passed: true,
       message: 'All decomposed impl docs have at least one existing atomic task',
     });
   }
@@ -191,7 +191,7 @@ function validateCLT03(
       if (!coveredModules.has(mod)) {
         checks.push({
           rule: 'CL-T03',
-          pass: false,
+          passed: false,
           message: `Impl doc ${impl.id} module '${mod}' is not covered by any child task`,
         });
       }
@@ -203,7 +203,7 @@ function validateCLT03(
         if (!implModules.has(mod)) {
           checks.push({
             rule: 'CL-T03',
-            pass: false,
+            passed: false,
             message: `Task ${task.id} has module '${mod}' not in parent impl doc ${impl.id} modules`,
           });
         }
@@ -214,7 +214,7 @@ function validateCLT03(
   if (checks.length === 0) {
     checks.push({
       rule: 'CL-T03',
-      pass: true,
+      passed: true,
       message: 'All module containment checks pass (full coverage and no boundary violations)',
     });
   }
@@ -262,7 +262,7 @@ function validateCLT04(
       if (!coveredRefs.has(section)) {
         checks.push({
           rule: 'CL-T04',
-          pass: false,
+          passed: false,
           message: `Impl doc ${impl.id} spec_section '${section}' is not covered by any child task's context_refs`,
         });
       }
@@ -272,7 +272,7 @@ function validateCLT04(
   if (checks.length === 0) {
     checks.push({
       rule: 'CL-T04',
-      pass: true,
+      passed: true,
       message: 'All impl doc spec_sections are covered by child task context_refs',
     });
   }
@@ -322,7 +322,7 @@ function validateCLT05(
           if (tasksOfA.has(blockedById)) {
             checks.push({
               rule: 'CL-T05',
-              pass: false,
+              passed: false,
               message: `Impl doc ${implA.id} depends on ${implBId}, but task ${taskB.id} (from ${implBId}) is blocked_by task ${blockedById} (from ${implA.id}), contradicting impl-level ordering`,
             });
           }
@@ -334,7 +334,7 @@ function validateCLT05(
   if (checks.length === 0) {
     checks.push({
       rule: 'CL-T05',
-      pass: true,
+      passed: true,
       message: 'Task dependency ordering is consistent with impl doc dependency ordering',
     });
   }
@@ -362,6 +362,6 @@ export function validateImplTaskCrossLevel(
 
   return {
     checks,
-    pass: checks.every((c) => c.pass),
+    passed: checks.every((c) => c.passed),
   };
 }

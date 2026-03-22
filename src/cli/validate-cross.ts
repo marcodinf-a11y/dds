@@ -103,9 +103,9 @@ async function main(): Promise<void> {
   const implTaskResult = validateImplTaskCrossLevel(relevantImpls, relevantTasks);
 
   for (const r of implTaskResult.checks) {
-    const status = r.pass ? 'PASS' : 'FAIL';
+    const status = r.passed ? 'PASS' : 'FAIL';
     process.stdout.write(`[${status}] ${r.rule}: ${r.message}\n`);
-    if (!r.pass) {
+    if (!r.passed) {
       allPassed = false;
     }
   }

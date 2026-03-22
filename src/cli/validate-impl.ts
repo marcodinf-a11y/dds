@@ -73,8 +73,8 @@ async function main(): Promise<void> {
   const result = validateImplRing0(impl, markdown, context);
 
   for (const r of result.results) {
-    const status = r.pass ? 'PASS' : 'FAIL';
-    process.stdout.write(`[${status}] ${r.rule}: ${r.message}\n`);
+    const status = r.passed ? 'PASS' : 'FAIL';
+    process.stdout.write(`[${status}] ${r.rule}: ${r.message ?? ''}\n`);
   }
 
   process.stdout.write(`\nOverall: ${result.valid ? 'VALID' : 'INVALID'}\n`);
