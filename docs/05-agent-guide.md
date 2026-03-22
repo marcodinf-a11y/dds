@@ -97,7 +97,7 @@ For full system docs, see schemas/ directory:
 - Ring 0 before Ring 1 before Ring 2. Never skip rings.
 - Validation failures restart from Ring 0 after fixes
 
-## Build Commands (project-specific — replace with your project's commands)
+## Build Commands
 - Build: dotnet build LTOS.sln /warnaserror
 - Test: dotnet test
 - Arch tests: dotnet test LTOS.ArchTests
@@ -200,31 +200,27 @@ Hooks are deterministic — they fire every time, unlike CLAUDE.md instructions 
 
 ### .claude/settings.json
 
-Both hooks call a single Python script (`validation/hooks/dds_hook.py`) with a mode argument. This avoids fragile shell one-liners, handles path normalization correctly, and uses proper JSON parsing instead of grep.
-
-**Prerequisites:** Python 3.8+ must be available in `PATH`.
-
 ```json
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 validation/hooks/dds_hook.py pre \"$CLAUDE_FILE\""
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 validation/hooks/dds_hook.py post \"$CLAUDE_FILE\""
+            "command": "bash -c 'FILE=\"$CLAUDE_FILE\"; case \"$FILE\" in tasks/definitions/*.json) python3 validation/ring0/check_task_definition.py \"$FILE\" ;; implementation/definitions/*.json) python3 validation/ring0/check_impl_definition.py \"$FILE\" ;; specs/definitions/*.json) python3 validation/ring0/check_spec_definition.py \"$FILE\" ;; esac'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'FILE=\"$CLAUDE_FILE\"; if echo \"$FILE\" | grep -qE \"tasks/executions/|pipeline/\"; then exit 0; fi; TASK_JSON=$(find tasks/definitions -name \"*.json\" -exec grep -l \"$FILE\" {} + 2>/dev/null | head -1); if [ -n \"$TASK_JSON\" ]; then SCOPE=$(python3 -c \"import json,sys; d=json.load(open(sys.argv[1])); print(chr(10).join(d.get(\\\"scope\\\",{}).get(\\\"files\\\",[])))\"); echo \"$SCOPE\" | grep -qF \"$FILE\" || { echo \"BLOCKED: $FILE is outside declared scope\"; exit 2; }; fi'"
           }
         ]
       }
@@ -233,25 +229,9 @@ Both hooks call a single Python script (`validation/hooks/dds_hook.py`) with a m
 }
 ```
 
-**PreToolUse (pre mode):** Enforces scope boundaries. When an agent tries to edit a file, the hook normalizes the path, searches task definitions for an active task referencing the file, and checks `scope.files` membership using exact list matching (not substring grep). Exit code 2 blocks the operation. Files in `tasks/executions/` and `pipeline/` are allowed unconditionally.
+**PostToolUse hook:** Runs Ring 0 JSON schema validation automatically whenever a definition file is written or edited. Catches structural errors immediately.
 
-**PostToolUse (post mode):** Runs Ring 0 JSON schema validation automatically whenever a definition file is written or edited. Routes to the appropriate validator (`check_spec.py`, `check_impl.py`, or `check_task.py`) based on the file path. Non-definition files are ignored.
-
-**Script architecture:**
-
-```
-validation/
-├── hooks/
-│   └── dds_hook.py           # Unified hook entry point
-│                              # Handles: path normalization, routing,
-│                              # scope checking, error formatting
-└── ring0/
-    ├── check_spec.py         # Ring 0 spec validator (imported by hook)
-    ├── check_impl.py         # Ring 0 impl validator
-    └── check_task.py         # Ring 0 task validator
-```
-
-The hook script handles all shared concerns (path normalization, JSON parsing, routing). The Ring 0 validators are separate modules containing the actual validation logic (JSON schema checks, markdown structure, dependency graphs).
+**PreToolUse hook:** Enforces scope boundaries. When an agent tries to edit a file, the hook checks whether that file is within the scope of any active task. Exit code 2 blocks the operation — Claude Code respects this 100% of the time.
 
 ---
 
@@ -338,7 +318,7 @@ the schema documents.
 
 ## Implementation Doc → Atomic Tasks
 - Read schemas/03-atomic-task-schema.md for the generation prompt.
-- Follow the impl doc's Task Decomposition Notes section.
+- Follow the impl doc's Decomposition Notes section.
 - IMPORTANT: Maintain dependency symmetry in blocks/blocked_by.
 - Produce 3-8 atomic tasks.
 - List tasks in execution order in the impl doc's atomic_tasks
@@ -387,7 +367,7 @@ code changes described in an atomic task.
   but check proactively.
 - Follow the Approach section as a plan. Do not deviate unless a
   step is impossible (document why in agent_notes).
-- Respect every Execution Constraint listed in the task description.
+- Respect every Constraint listed in the task description.
 - If a verify command fails, analyze the output, fix the code, and
   re-run. Do not mark a criterion as "pass" unless the command
   actually exits 0.
@@ -470,7 +450,7 @@ This is the only workflow that requires human involvement throughout.
 5. Run `/project:validate specs/definitions/spec-XXXXXXXX.json` to check.
 6. Iterate until validation passes.
 
-**Tip:** Start with a rough description and let Claude ask clarifying questions. The spec template's six sections (Overview, Functional Requirements, NFRs, System Constraints, Glossary, Decomposition Guidance) provide the interview structure.
+**Tip:** Start with a rough description and let Claude ask clarifying questions. The spec template's six sections (Overview, Functional Requirements, NFRs, Constraints, Glossary, Decomposition Guidance) provide the interview structure.
 
 ### Workflow 2: Full Pipeline (Automated)
 

@@ -44,7 +44,7 @@ Generate with: `openssl rand -hex 4`
   "title": "AtomicTaskDefinition",
   "type": "object",
   "required": [
-    "id", "parent", "description_file", "blocked_by", "blocks",
+    "id", "parent", "description", "blocked_by", "blocks",
     "scope", "acceptance_criteria", "context_refs"
   ],
   "additionalProperties": false,
@@ -59,7 +59,7 @@ Generate with: `openssl rand -hex 4`
       "pattern": "^impl-[0-9a-f]{8}$",
       "description": "ID of the implementation document this task was decomposed from."
     },
-    "description_file": {
+    "description": {
       "type": "string",
       "pattern": "^at-[0-9a-f]{8}\\.md$",
       "description": "Filename of the markdown description document for this task."
@@ -95,7 +95,7 @@ Generate with: `openssl rand -hex 4`
           "type": "array",
           "items": { "type": "string" },
           "minItems": 1,
-          "description": "Logical modules this task operates within. Must be a subset of the parent impl doc's modules. For transitive dependencies (e.g., shared type modules), include the module if the task directly depends on it. See CL-T03 for the cross-task coverage requirement."
+          "description": "Logical modules this task operates within. Must be a subset of the parent impl doc's modules."
         }
       },
       "description": "Enforced scope boundary."
@@ -109,7 +109,7 @@ Generate with: `openssl rand -hex 4`
     "context_refs": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "References to spec sections this task fulfills. Format: spec-XXXXXXXX#section-X.Y"
+      "description": "References to spec sections this task fulfills. Format: spec-XXXXXXXX#heading-slug"
     }
   },
   "definitions": {
@@ -192,16 +192,6 @@ Generate with: `openssl rand -hex 4`
 
 Types `test`, `build`, and `lint` are **machine-verifiable** — the harness runs the `verify` command and checks exit code 0. Type `review` requires an **LLM judgment call** using the `rubric` as the evaluation prompt.
 
-### NFR-Derived Acceptance Criteria
-
-When an implementation document adopts a spec-level NFR as a REQ-XX entry (see Implementation Doc Schema § NFR Propagation), the atomic tasks implementing that requirement must include acceptance criteria that verify the non-functional property. Use the criterion type that best fits:
-
-- **Performance thresholds** → `test` criterion with a benchmark command (e.g., `verify: "dotnet test --filter Perf_PollingCpuUsage"`)
-- **Architectural constraints** → `lint` criterion with a static analysis rule (e.g., `verify: "dotnet test LTOS.ArchTests --filter NoDirectSoapCalls"`)
-- **Quality attributes** that resist automation → `review` criterion with a specific rubric referencing the measurable threshold from the NFR
-
-If an NFR cannot be verified at the atomic task level (e.g., "support 4 concurrent devices" requires integration testing), the task's Execution Constraints section must note this and reference the NFR. The acceptance criterion should verify the task's contribution to the NFR (e.g., "no shared mutable state between test cycles").
-
 ### Dependency Symmetry Invariant
 
 The `blocks` and `blocked_by` fields are redundant by design — both directions are stored for fast local lookup. This creates an invariant that Ring 0 enforces:
@@ -216,7 +206,7 @@ If task `at-a1b2c3d4` declares `"blocks": ["at-e9f1a3b5"]`, then `at-e9f1a3b5` M
 {
   "id": "at-a1b2c3d4",
   "parent": "impl-c9d2f4a1",
-  "description_file": "at-a1b2c3d4.md",
+  "description": "at-a1b2c3d4.md",
   "blocked_by": ["at-7f3e2a19", "at-b4c8d6e2"],
   "blocks": ["at-e9f1a3b5"],
   "scope": {
@@ -259,8 +249,8 @@ If task `at-a1b2c3d4` declares `"blocks": ["at-e9f1a3b5"]`, then `at-e9f1a3b5` M
     }
   ],
   "context_refs": [
-    "spec-e8a2b4c6#section-2.1",
-    "spec-e8a2b4c6#section-2.1.4"
+    "spec-e8a2b4c6#test-execution",
+    "spec-e8a2b4c6#error-handling"
   ]
 }
 ```
@@ -311,10 +301,10 @@ Steps should be concrete enough that the agent is not making
 architectural decisions. "Add a method to X that does Y by calling Z"
 is good. "Implement error handling" is too vague.
 
-## Execution Constraints
+## Constraints
 
 What the agent must NOT do. Each constraint is a single, verifiable
-statement. Execution constraints are checked during review.
+statement. Constraints are checked during review.
 
 Examples:
 - Do not modify the public API of {class}.
@@ -328,7 +318,7 @@ Links to spec sections, related atomic tasks, and relevant
 documentation. Each reference includes a brief note on what it
 provides.
 
-- spec-XXXXXXXX#section-X.Y — {what this section defines}
+- spec-XXXXXXXX#heading-slug — {what this section defines}
 - at-XXXXXXXX — {what this task provides/depends on}
 ```
 
@@ -382,7 +372,7 @@ types and SOAP types.
 8. Catch SoapException and return `Result.Failure(ex.Message)`.
 9. Catch TimeoutException and return `Result.Failure("Device communication timeout")`.
 
-## Execution Constraints
+## Constraints
 
 - Do not modify the ILTOSClient interface.
 - Do not add new public methods beyond RunTest.
@@ -392,8 +382,8 @@ types and SOAP types.
 
 ## References
 
-- spec-e8a2b4c6#section-2.1 — Full requirements for test execution workflow
-- spec-e8a2b4c6#section-2.1.4 — Error handling requirements for test execution
+- spec-e8a2b4c6#test-execution — Full requirements for test execution workflow
+- spec-e8a2b4c6#error-handling — Error handling requirements for test execution
 - at-7f3e2a19 — Introduces Result<T> type used as return value
 - at-b4c8d6e2 — Implements ToSoapRequest/ToTestResult mapping methods
 ```
@@ -517,44 +507,44 @@ types and SOAP types.
 
 | Rule | Check |
 |---|---|
-| R0-01 | JSON validates against AtomicTaskDefinition schema |
-| R0-02 | `id` is unique across all task definitions |
-| R0-03 | `parent` references an existing implementation document |
-| R0-04 | `description_file` file exists and is a valid markdown file |
-| R0-05 | All IDs in `blocked_by` reference existing task definitions |
-| R0-06 | All IDs in `blocks` reference existing task definitions |
-| R0-07 | **Dependency symmetry invariant:** for every task B in `blocks`, B.`blocked_by` contains this task's ID, and vice versa |
-| R0-08 | Dependency graph is acyclic (no circular dependencies) |
-| R0-09 | All `acceptance_criteria` IDs are unique within the task |
-| R0-10 | Criteria of type `test`, `build`, `lint` have a `verify` field |
-| R0-11 | Criteria of type `review` have a `rubric` field |
-| R0-12 | `scope.files` contains at least one entry |
-| R0-13 | `context_refs` is non-empty |
-| R0-14 | No self-references in `blocked_by` or `blocks` |
+| R0-T01 | JSON validates against AtomicTaskDefinition schema |
+| R0-T02 | `id` is unique across all task definitions |
+| R0-T03 | `parent` references an existing implementation document |
+| R0-T04 | `description` file exists and is a valid markdown file |
+| R0-T05 | All IDs in `blocked_by` reference existing task definitions |
+| R0-T06 | All IDs in `blocks` reference existing task definitions |
+| R0-T07 | **Dependency symmetry invariant:** for every task B in `blocks`, B.`blocked_by` contains this task's ID, and vice versa |
+| R0-T08 | Dependency graph is acyclic (no circular dependencies) |
+| R0-T09 | All `acceptance_criteria` IDs are unique within the task |
+| R0-T10 | Criteria of type `test`, `build`, `lint` have a `verify` field |
+| R0-T11 | Criteria of type `review` have a `rubric` field |
+| R0-T12 | `scope.files` contains at least one entry |
+| R0-T13 | `context_refs` is non-empty |
+| R0-T14 | No self-references in `blocked_by` or `blocks` |
 
 **Task Description (Markdown):**
 
 | Rule | Check |
 |---|---|
-| R0-20 | File starts with H1 matching pattern `# {at-id}: {title}` |
-| R0-21 | Contains exactly five H2 sections: Objective, Context, Approach, Execution Constraints, References |
-| R0-22 | H2 sections appear in the required order |
-| R0-23 | No H2 section is empty |
-| R0-24 | H1 task-id matches the JSON definition's `id` |
+| R0-T20 | File starts with H1 matching pattern `# {at-id}: {title}` |
+| R0-T21 | Contains exactly five H2 sections: Objective, Context, Approach, Constraints, References |
+| R0-T22 | H2 sections appear in the required order |
+| R0-T23 | No H2 section is empty |
+| R0-T24 | H1 task-id matches the JSON definition's `id` |
 
 **Execution Record:**
 
 | Rule | Check |
 |---|---|
-| R0-30 | JSON validates against ExecutionRecord schema |
-| R0-31 | `task_id` references an existing task definition |
-| R0-32 | `run` is sequential (no gaps per task_id) |
-| R0-33 | All `criterion_id` entries reference criteria in the task definition |
-| R0-34 | No duplicate `criterion_id` within `criteria_results` |
+| R0-T30 | JSON validates against ExecutionRecord schema |
+| R0-T31 | `task_id` references an existing task definition |
+| R0-T32 | `run` is sequential (no gaps per task_id) |
+| R0-T33 | All `criterion_id` entries reference criteria in the task definition |
+| R0-T34 | No duplicate `criterion_id` within `criteria_results` |
 
 ### Ring 1 — Semantic Consistency
 
-**R1-01: Coverage completeness**
+**R1-T01: Coverage completeness**
 
 ```
 Check: Do the atomic tasks fully cover their parent implementation doc?
@@ -568,7 +558,7 @@ in the parent implementation document. For each, determine whether at
 least one atomic task addresses it. Report any item not covered.
 ```
 
-**R1-02: Contradiction detection**
+**R1-T02: Contradiction detection**
 
 ```
 Check: Do any sibling atomic tasks make contradictory assumptions?
@@ -576,17 +566,17 @@ Check: Do any sibling atomic tasks make contradictory assumptions?
 Documents provided:
 - Sibling atomic task descriptions (same parent): {task_descriptions}
 
-Question: Compare the Context, Approach, and Execution Constraints sections
+Question: Compare the Context, Approach, and Constraints sections
 across all sibling tasks. Find any case where:
 (a) two tasks modify the same method or class in incompatible ways,
 (b) one task's Approach assumes something that another task's
-    Execution Constraints forbid, or
+    Constraints forbid, or
 (c) two tasks make different assumptions about the same interface.
 
 Report each contradiction with references to both tasks.
 ```
 
-**R1-03: Scope coherence**
+**R1-T03: Scope coherence**
 
 ```
 Check: Does the approach stay within the declared file scope?
@@ -600,7 +590,7 @@ Approach section. Report any reference to a file that is not in the
 declared scope.files list.
 ```
 
-**R1-04: Dependency correctness**
+**R1-T04: Dependency correctness**
 
 ```
 Check: Are task dependencies correctly declared?
@@ -619,7 +609,7 @@ Report each unresolved dependency.
 
 ### Ring 2 — Quality Rubric
 
-**R2-01: Actionability**
+**R2-T01: Actionability**
 
 ```
 Dimension: Could an agent execute this task without clarification?
@@ -634,7 +624,7 @@ Rubric:
 List any ambiguities found.
 ```
 
-**R2-02: Scope boundedness**
+**R2-T02: Scope boundedness**
 
 ```
 Dimension: Is this task small enough for a single agent session?
@@ -647,7 +637,7 @@ Rubric:
 Estimate the number of distinct changes and flag if over 5.
 ```
 
-**R2-03: Approach specificity**
+**R2-T03: Approach specificity**
 
 ```
 Dimension: Does every step name a concrete file, class, or method?
@@ -661,7 +651,7 @@ Rubric:
 List any vague steps.
 ```
 
-**R2-04: Constraint testability**
+**R2-T04: Constraint testability**
 
 ```
 Dimension: Can each constraint be verified?
@@ -675,7 +665,7 @@ Rubric:
 Assess each constraint individually.
 ```
 
-**R2-05: Criterion completeness**
+**R2-T05: Criterion completeness**
 
 ```
 Dimension: Do acceptance criteria cover all behavioral changes?
@@ -707,10 +697,10 @@ Rules:
 - Generate a fresh task ID and fresh acceptance criterion IDs using
   8 random hex chars each.
 - Set parent to the implementation document's ID.
-- Follow the implementation doc's Task Decomposition Notes:
+- Follow the implementation doc's Decomposition Notes:
   - Use the Suggested Task Boundaries as a starting point.
   - Respect the Ordering Rationale for blocked_by/blocks.
-  - Follow the Decomposition Rules.
+  - Follow the Decomposition Constraints.
 - IMPORTANT: Maintain dependency symmetry. If task A blocks task B,
   then A.blocks must contain B's ID AND B.blocked_by must contain
   A's ID.

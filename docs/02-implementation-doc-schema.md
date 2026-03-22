@@ -39,7 +39,7 @@ Generate with: `openssl rand -hex 4` → e.g., `c9d2f4a1` → `impl-c9d2f4a1`
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ImplementationDefinition",
   "type": "object",
-  "required": ["id", "spec_sections", "description_file", "modules", "status"],
+  "required": ["id", "spec_sections", "description", "modules", "status"],
   "additionalProperties": false,
   "properties": {
     "id": {
@@ -51,9 +51,9 @@ Generate with: `openssl rand -hex 4` → e.g., `c9d2f4a1` → `impl-c9d2f4a1`
       "type": "array",
       "items": { "type": "string" },
       "minItems": 1,
-      "description": "Spec sections this implementation document addresses. Format: spec-XXXXXXXX#section-X.Y. An implementation doc can draw from multiple spec sections and even multiple specs."
+      "description": "Spec sections this implementation document addresses. Format: spec-XXXXXXXX#heading-slug (standard markdown heading anchor, e.g., spec-e8a2b4c6#test-execution). An implementation doc can draw from multiple spec sections and even multiple specs."
     },
-    "description_file": {
+    "description": {
       "type": "string",
       "pattern": "^impl-[0-9a-f]{8}\\.md$",
       "description": "Filename of the markdown description document."
@@ -70,7 +70,7 @@ Generate with: `openssl rand -hex 4` → e.g., `c9d2f4a1` → `impl-c9d2f4a1`
       "type": "array",
       "items": { "type": "string" },
       "minItems": 1,
-      "description": "Logical modules this implementation operates within. All child atomic tasks must have their scope.modules be a subset of this list. Together, the tasks' modules must collectively cover all declared modules (see CL-T03). Only declare a module if at least one task will operate within it."
+      "description": "Logical modules this implementation operates within. All child atomic tasks must have their scope.modules be a subset of this list."
     },
     "dependencies": {
       "type": "array",
@@ -110,10 +110,10 @@ Backward transitions are permitted. A `decomposed` document that fails re-valida
 {
   "id": "impl-c9d2f4a1",
   "spec_sections": [
-    "spec-e8a2b4c6#section-2.1",
-    "spec-e8a2b4c6#section-2.1.4"
+    "spec-e8a2b4c6#test-execution",
+    "spec-e8a2b4c6#error-handling"
   ],
-  "description_file": "impl-c9d2f4a1.md",
+  "description": "impl-c9d2f4a1.md",
   "atomic_tasks": [
     "at-7f3e2a19",
     "at-b4c8d6e2",
@@ -132,7 +132,7 @@ Backward transitions are permitted. A `decomposed` document that fails re-valida
 
 ### Template
 
-The implementation description is a markdown file named `{impl-id}.md`. It must contain exactly the following seven H2 sections in order. The Task Decomposition Notes section has three required H3 subsections.
+The implementation description is a markdown file named `{impl-id}.md`. It must contain exactly the following seven H2 sections in order. The Decomposition Notes section has three required H3 subsections.
 
 ```markdown
 # {impl-id}: {title}
@@ -161,44 +161,16 @@ of knowledge a human developer would have from working in this area.
 
 ## Requirements
 
-Implementation-level requirements, traced to the spec's FR-XX and
-NFR-XX entries. Each REQ-XX maps to one or more spec requirements.
-Downstream, atomic tasks verify these requirements via acceptance
-criteria (spec FR/NFR → impl REQ → task acceptance criterion).
-
+The specific behaviors being implemented, traced to spec sections.
 Each requirement should be a concrete, testable statement. Use the
 format:
 
-- **REQ-XX:** {requirement text} (from spec-XXXXXXXX#section-X.Y)
+- **REQ-XX:** {requirement text} (from spec-XXXXXXXX#heading-slug)
 
 Requirements must be exhaustive relative to the referenced spec
 sections. Every behavior described in those spec sections must appear
 here as a requirement, either directly or by explicit exclusion in
 the Out of Scope section.
-
-### Non-Functional Requirement Propagation
-
-Each NFR (NFR-XX) must be handled in one of three ways:
-
-1. **Adopted as a REQ-XX** — When the NFR applies directly to this
-   implementation's scope, restate it as a concrete requirement with
-   a measurable threshold. Reference the original NFR.
-   Example: `REQ-07: Polling shall not exceed 1% CPU (from
-   spec-e8a2b4c6 NFR-01)`.
-
-2. **Split across multiple impl docs** — When an NFR spans multiple
-   features (e.g., "response time < 200ms"), each impl doc adopts
-   the portion it can control and states its contribution.
-   Example: impl doc A owns "serialization < 50ms", impl doc B
-   owns "network round-trip < 150ms".
-
-3. **Deferred to Out of Scope** — When the NFR cannot be addressed
-   at this level (e.g., infrastructure-level scaling), exclude it
-   explicitly with justification.
-
-The union of all impl docs' adopted NFRs plus explicit deferrals
-must cover every NFR in the parent spec. This is checked by
-validation rule R1-10 (spec coverage).
 
 ## Design Decisions
 
@@ -234,7 +206,7 @@ dependency, state what it provides that this implementation needs.
 - impl-XXXXXXXX — {what it provides}
 - External: {description of external prerequisite}
 
-## Task Decomposition Notes
+## Decomposition Notes
 
 Guidance for the agent that will break this implementation into
 atomic tasks.
@@ -258,7 +230,7 @@ Explain why certain pieces must come before others. Call out:
   exercise it)
 - Any other sequencing constraints
 
-### Decomposition Rules
+### Decomposition Constraints
 
 Rules the decomposition agent must follow when creating atomic tasks:
 - Maximum number of files per task
@@ -306,12 +278,12 @@ that holds configurable parameters like polling intervals and timeouts.
 
 ## Requirements
 
-- **REQ-01:** The system shall execute a leakage test by calling the SOAP RunTest endpoint with the provided test parameters. (from spec-e8a2b4c6#section-2.1)
-- **REQ-02:** The system shall poll the device for test status at a configurable interval until the test completes or fails. (from spec-e8a2b4c6#section-2.1)
-- **REQ-03:** The system shall return a typed Result<TestResult> indicating success with the test data, or failure with an error message. (from spec-e8a2b4c6#section-2.1)
-- **REQ-04:** The system shall support cancellation of an in-progress test via CancellationToken. (from spec-e8a2b4c6#section-2.1)
-- **REQ-05:** The system shall handle SOAP faults during test execution by returning Result.Failure with the fault message, without throwing exceptions. (from spec-e8a2b4c6#section-2.1.4)
-- **REQ-06:** The system shall handle device communication timeouts by returning Result.Failure with a timeout-specific message. (from spec-e8a2b4c6#section-2.1.4)
+- **REQ-01:** The system shall execute a leakage test by calling the SOAP RunTest endpoint with the provided test parameters. (from spec-e8a2b4c6#test-execution)
+- **REQ-02:** The system shall poll the device for test status at a configurable interval until the test completes or fails. (from spec-e8a2b4c6#test-execution)
+- **REQ-03:** The system shall return a typed Result<TestResult> indicating success with the test data, or failure with an error message. (from spec-e8a2b4c6#test-execution)
+- **REQ-04:** The system shall support cancellation of an in-progress test via CancellationToken. (from spec-e8a2b4c6#test-execution)
+- **REQ-05:** The system shall handle SOAP faults during test execution by returning Result.Failure with the fault message, without throwing exceptions. (from spec-e8a2b4c6#error-handling)
+- **REQ-06:** The system shall handle device communication timeouts by returning Result.Failure with a timeout-specific message. (from spec-e8a2b4c6#error-handling)
 
 ## Design Decisions
 
@@ -321,7 +293,7 @@ that holds configurable parameters like polling intervals and timeouts.
 
 ## Out of Scope
 
-- **Batch test execution** (running multiple tests in sequence) — deferred to a separate implementation doc, as the spec treats it as a distinct workflow (spec-e8a2b4c6#section-2.3).
+- **Batch test execution** (running multiple tests in sequence) — deferred to a separate implementation doc, as the spec treats it as a distinct workflow (spec-e8a2b4c6#batch-test-execution).
 - **Test result persistence** — storing results to a database or file is handled by the result export module, not the execution service.
 - **UI integration** — the ViewModel that calls RunTest is a separate implementation doc.
 
@@ -330,7 +302,7 @@ that holds configurable parameters like polling intervals and timeouts.
 - impl-a3b7e1f9 — Provides the Result<T> type in LTOS.Core and establishes the error handling pattern used by all service methods.
 - External: ILTOSClient SOAP interface must be defined with RunTest, GetTestStatus, GetTestResult, and AbortTest operations.
 
-## Task Decomposition Notes
+## Decomposition Notes
 
 ### Suggested Task Boundaries
 
@@ -348,7 +320,7 @@ is broken the RunTest tests will fail for the wrong reasons.
 
 Dependency chain: Mapping methods → Mapping tests → RunTest → RunTest tests
 
-### Decomposition Rules
+### Decomposition Constraints
 
 - Each atomic task should touch no more than 3 files (production code + its test file + possibly a shared type file).
 - Mapping methods and service logic must be separate tasks — they touch different files and have different testing strategies.
@@ -368,37 +340,37 @@ Deterministic checks. No LLM. Milliseconds.
 
 | Rule | Check |
 |---|---|
-| R0-40 | JSON validates against ImplementationDefinition schema |
-| R0-41 | `id` is unique across all implementation definitions |
-| R0-42 | `description_file` file exists and is a valid markdown file |
-| R0-43 | All entries in `spec_sections` follow the format `spec-XXXXXXXX#section-X.Y` |
-| R0-44 | All entries in `atomic_tasks` reference existing atomic task definitions |
-| R0-45 | All entries in `dependencies` reference existing implementation definitions |
-| R0-46 | No self-references in `dependencies` |
-| R0-47 | Dependency graph across implementation documents is acyclic |
-| R0-48 | If `status` is `draft` or `validated`, `atomic_tasks` must be empty |
-| R0-49 | If `status` is `decomposed`, `atomic_tasks` must be non-empty |
-| R0-50 | **Parent consistency invariant:** every task in `atomic_tasks` has its `parent` field set to this document's `id` |
-| R0-51 | **Module containment invariant:** every task in `atomic_tasks` has `scope.modules` that is a non-empty subset of this document's `modules`. Together, the tasks' modules must collectively cover all declared modules (see CL-T03) |
+| R0-I40 | JSON validates against ImplementationDefinition schema |
+| R0-I41 | `id` is unique across all implementation definitions |
+| R0-I42 | `description` file exists and is a valid markdown file |
+| R0-I43 | All entries in `spec_sections` follow the format `spec-XXXXXXXX#heading-slug` where heading-slug is a valid markdown heading anchor (lowercase, hyphens, no special chars) |
+| R0-I44 | All entries in `atomic_tasks` reference existing atomic task definitions |
+| R0-I45 | All entries in `dependencies` reference existing implementation definitions |
+| R0-I46 | No self-references in `dependencies` |
+| R0-I47 | Dependency graph across implementation documents is acyclic |
+| R0-I48 | If `status` is `draft` or `validated`, `atomic_tasks` must be empty |
+| R0-I49 | If `status` is `decomposed`, `atomic_tasks` must be non-empty |
+| R0-I50 | **Parent consistency invariant:** every task in `atomic_tasks` has its `parent` field set to this document's `id` |
+| R0-I51 | **Module containment invariant:** every task in `atomic_tasks` has `scope.modules` that is a subset of this document's `modules` |
 
 **Implementation Description (Markdown):**
 
 | Rule | Check |
 |---|---|
-| R0-60 | File starts with H1 heading matching pattern `# {impl-id}: {title}` |
-| R0-61 | Contains exactly seven H2 sections: Objective, Background, Requirements, Design Decisions, Out of Scope, Dependencies, Task Decomposition Notes |
-| R0-62 | H2 sections appear in the required order |
-| R0-63 | No H2 section is empty |
-| R0-64 | H1 impl-id matches the JSON definition's `id` |
-| R0-65 | Task Decomposition Notes contains the required H3 subsections: Suggested Task Boundaries, Ordering Rationale, Decomposition Rules |
-| R0-66 | Requirements section contains at least one REQ-XX entry |
-| R0-67 | Each REQ-XX entry includes a spec section reference |
+| R0-I60 | File starts with H1 heading matching pattern `# {impl-id}: {title}` |
+| R0-I61 | Contains exactly seven H2 sections: Objective, Background, Requirements, Design Decisions, Out of Scope, Dependencies, Decomposition Notes |
+| R0-I62 | H2 sections appear in the required order |
+| R0-I63 | No H2 section is empty |
+| R0-I64 | H1 impl-id matches the JSON definition's `id` |
+| R0-I65 | Decomposition Notes contains the required H3 subsections: Suggested Task Boundaries, Ordering Rationale, Decomposition Constraints |
+| R0-I66 | Requirements section contains at least one REQ-XX entry |
+| R0-I67 | Each REQ-XX entry includes a spec section reference |
 
 ### Ring 1 — Semantic Consistency
 
 LLM-based checks with narrow prompts and structured JSON output.
 
-**R1-10: Spec coverage**
+**R1-I10: Spec coverage**
 
 ```
 Check: Does the implementation document cover all requirements from
@@ -417,7 +389,7 @@ determine whether it is:
 Report any spec requirement that is neither addressed nor excluded.
 ```
 
-**R1-11: Out of scope consistency**
+**R1-I11: Out of scope consistency**
 
 ```
 Check: Are all spec items accounted for — either in Requirements or
@@ -435,7 +407,7 @@ section. These are silently dropped items.
 Report each silently dropped item as an issue.
 ```
 
-**R1-12: Design decision coherence**
+**R1-I12: Design decision coherence**
 
 ```
 Check: Do design decisions align with established patterns?
@@ -449,7 +421,7 @@ any pattern, convention, or architectural approach described in the
 Background section. Report contradictions.
 ```
 
-**R1-13: Dependency completeness**
+**R1-I13: Dependency completeness**
 
 ```
 Check: Are all prerequisites listed as dependencies?
@@ -465,7 +437,7 @@ Requirements that is not listed in the Dependencies section. Report
 each missing dependency.
 ```
 
-**R1-14: Decomposition coverage** (only when status is `decomposed`)
+**R1-I14: Decomposition coverage** (only when status is `decomposed`)
 
 ```
 Check: Do the atomic tasks fully cover the implementation requirements?
@@ -479,7 +451,7 @@ whether at least one atomic task addresses it. Report any requirement
 not covered by any task.
 ```
 
-**R1-15: Cross-implementation contradiction**
+**R1-I15: Cross-implementation contradiction**
 
 ```
 Check: Are design decisions consistent across sibling implementation
@@ -499,7 +471,7 @@ with references to both documents.
 
 LLM-based rubric scoring. Pass/fail verdicts with evidence.
 
-**R2-10: Decomposability**
+**R2-I10: Decomposability**
 
 ```
 Dimension: Can this implementation document be broken into 3-8 atomic
@@ -517,7 +489,7 @@ Rubric:
 Estimate the likely task count and flag if outside the 3-8 range.
 ```
 
-**R2-11: Requirement testability**
+**R2-I11: Requirement testability**
 
 ```
 Dimension: Is each REQ-XX entry concrete enough to write an
@@ -536,7 +508,7 @@ Rubric:
 Assess each requirement individually.
 ```
 
-**R2-12: Background sufficiency**
+**R2-I12: Background sufficiency**
 
 ```
 Dimension: Does the Background section provide enough context for a
@@ -555,7 +527,7 @@ Rubric:
 List any areas where an agent would need to guess or explore.
 ```
 
-**R2-13: Design decision completeness**
+**R2-I13: Design decision completeness**
 
 ```
 Dimension: Are there architectural choices implied by the Requirements
@@ -573,7 +545,7 @@ Rubric:
 List any implicit decisions the decomposition agent would face.
 ```
 
-**R2-14: Boundary clarity**
+**R2-I14: Boundary clarity**
 
 ```
 Dimension: Are the boundaries of this implementation document clear
@@ -591,17 +563,17 @@ Rubric:
 List any ambiguous boundary items.
 ```
 
-**R2-15: Decomposition notes quality**
+**R2-I15: Decomposition notes quality**
 
 ```
-Dimension: Are the Task Decomposition Notes specific and actionable?
+Dimension: Are the Decomposition Notes specific and actionable?
 
 Document: {impl_content}
 
 Rubric:
 - PASS if: Suggested Task Boundaries cover all REQ-XX entries,
   Ordering Rationale is specific about which tasks depend on which
-  and why, and Decomposition Rules are concrete and verifiable.
+  and why, and Decomposition Constraints are concrete and verifiable.
 - FAIL if: Task boundaries are vague, ordering rationale is generic,
   or constraints are aspirational rather than enforceable.
 
@@ -632,16 +604,16 @@ Rules:
 - Set status to "draft".
 - Leave atomic_tasks as an empty array.
 - The spec_sections field must reference specific sections of the
-  parent spec using the format spec-XXXXXXXX#section-X.Y.
+  parent spec using the format spec-XXXXXXXX#heading-slug.
 - The modules field must list the logical modules this implementation
   touches.
 - The markdown MUST contain exactly seven H2 sections in this order:
   Objective, Background, Requirements, Design Decisions, Out of Scope,
-  Dependencies, Task Decomposition Notes.
-- Task Decomposition Notes MUST contain three H3 subsections: Suggested
-  Task Boundaries, Ordering Rationale, Decomposition Rules.
+  Dependencies, Decomposition Notes.
+- Decomposition Notes MUST contain three H3 subsections: Suggested
+  Task Boundaries, Ordering Rationale, Decomposition Constraints.
 - Every REQ-XX must trace to a specific spec FR-XX or NFR-XX with
-  the format "(from spec-XXXXXXXX#section-X.Y)".
+  the format "(from spec-XXXXXXXX#heading-slug)".
 - Every spec requirement in the referenced sections must appear
   either in Requirements or in Out of Scope. NOTHING may be silently
   dropped.
@@ -693,7 +665,7 @@ Codebase context (key files and patterns):
 |---|---|
 | CL-T01 | Every atomic task's `parent` field references an impl doc that lists that task in its `atomic_tasks` array (bidirectional consistency) |
 | CL-T02 | Every impl doc with `status: decomposed` has at least one atomic task |
-| CL-T03 | The union of all `scope.modules` across an impl doc's atomic tasks equals the impl doc's `modules` (no module uncovered, no task exceeds boundary) |
+| CL-T03 | Every module in the impl doc's `modules` list appears in at least one child task's `scope.modules`, and every child task's `scope.modules` is a subset of the impl doc's `modules` (full coverage without boundary violations) |
 | CL-T04 | The union of all `context_refs` across an impl doc's atomic tasks covers all entries in the impl doc's `spec_sections` (full traceability) |
 | CL-T05 | Dependency ordering between impl docs is consistent with the `blocked_by`/`blocks` graph of their atomic tasks |
 

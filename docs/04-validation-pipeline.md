@@ -31,14 +31,12 @@ Deterministic. No LLM. Implemented as code (JSON schema validators, markdown par
 
 Ring 0 rules are defined per level:
 - Specification: R0-S01 through R0-S14 → see [Spec Schema](01-spec-schema.md)
-- Implementation Document: R0-40 through R0-67 → see [Implementation Doc Schema](02-implementation-doc-schema.md)
-- Atomic Task: R0-01 through R0-34 → see [Atomic Task Schema](03-atomic-task-schema.md)
+- Implementation Document: R0-I40 through R0-I67 → see [Implementation Doc Schema](02-implementation-doc-schema.md)
+- Atomic Task: R0-T01 through R0-T34 → see [Atomic Task Schema](03-atomic-task-schema.md)
 
 ### Ring 1 — Semantic Consistency
 
 LLM-based. Narrow prompts. Structured JSON output. Each check asks exactly one question and expects an issues list.
-
-**Determinism:** LLM-based checks are inherently non-deterministic. If running the same check twice produces different verdicts, the check prompt is too ambiguous — tighten it before proceeding. The system prompts below are designed to minimize variance through narrow questions and structured JSON output. Budget approximately 2K–5K tokens per Ring 1 check and 3K–8K tokens per Ring 2 check.
 
 #### System Prompt (All Ring 1 Checks)
 
@@ -72,8 +70,8 @@ Output schema:
 
 Ring 1 check prompts are defined per level:
 - Specification: R1-S01 through R1-S04 → see [Spec Schema](01-spec-schema.md)
-- Implementation Document: R1-10 through R1-15 → see [Implementation Doc Schema](02-implementation-doc-schema.md)
-- Atomic Task: R1-01 through R1-04 → see [Atomic Task Schema](03-atomic-task-schema.md)
+- Implementation Document: R1-I10 through R1-I15 → see [Implementation Doc Schema](02-implementation-doc-schema.md)
+- Atomic Task: R1-T01 through R1-T04 → see [Atomic Task Schema](03-atomic-task-schema.md)
 
 ### Ring 2 — Quality Rubric
 
@@ -112,8 +110,8 @@ Output schema:
 
 Ring 2 rubric prompts are defined per level:
 - Specification: R2-S01 through R2-S03 → see [Spec Schema](01-spec-schema.md)
-- Implementation Document: R2-10 through R2-15 → see [Implementation Doc Schema](02-implementation-doc-schema.md)
-- Atomic Task: R2-01 through R2-05 → see [Atomic Task Schema](03-atomic-task-schema.md)
+- Implementation Document: R2-I10 through R2-I15 → see [Implementation Doc Schema](02-implementation-doc-schema.md)
+- Atomic Task: R2-T01 through R2-T05 → see [Atomic Task Schema](03-atomic-task-schema.md)
 
 ---
 
@@ -124,9 +122,12 @@ The refinement loop is the core automation. It takes a document, runs validation
 ### Algorithm
 
 ```
-function refine(document, level, max_iterations=5):
+function refine(document, level, config):
+    max_iterations = config.refinement.max_iterations  # default: 5
+    convergence_threshold = config.refinement.convergence_threshold  # default: 0.7
     iteration = 0
-    previous_issues = null
+    previous_ring1_issues = null
+    previous_ring2_issues = null
 
     while iteration < max_iterations:
         iteration += 1
@@ -140,10 +141,11 @@ function refine(document, level, max_iterations=5):
         # Ring 1 — semantic
         ring1_result = run_ring1(document, level)
         if ring1_result.has_failures:
-            if converged(ring1_result.issues, previous_issues):
+            if converged(ring1_result.issues, previous_ring1_issues,
+                        convergence_threshold):
                 return escalate("Ring 1 convergence plateau",
                                document, ring1_result)
-            previous_issues = ring1_result.issues
+            previous_ring1_issues = ring1_result.issues
             document = fix_semantic(document, ring1_result)
             continue  # restart from Ring 0
 
@@ -152,10 +154,11 @@ function refine(document, level, max_iterations=5):
         if ring2_result.all_pass:
             return promote(document)
         else:
-            if converged(ring2_result.issues, previous_issues):
+            if converged(ring2_result.issues, previous_ring2_issues,
+                        convergence_threshold):
                 return escalate("Ring 2 convergence plateau",
                                document, ring2_result)
-            previous_issues = ring2_result.issues
+            previous_ring2_issues = ring2_result.issues
             document = fix_quality(document, ring2_result)
             continue  # restart from Ring 0
 
@@ -258,7 +261,7 @@ Output the complete revised document.
 ## Convergence Detection
 
 ```
-function converged(current_issues, previous_issues):
+function converged(current_issues, previous_issues, threshold):
     if previous_issues is null:
         return false
 
@@ -271,13 +274,15 @@ function converged(current_issues, previous_issues):
         return false  # no issues = not converged, actually passed
 
     overlap = current_set & previous_set
-    if len(overlap) / len(current_set) > 0.7:
+    if len(overlap) / len(current_set) > threshold:
         return true
 
     return false
 ```
 
-The 0.7 threshold: if 70% or more of the current issues were also present in the previous iteration, the fixer is not making progress. This is tunable — lower values are more aggressive about escalating, higher values give the loop more chances.
+The `threshold` parameter is read from `pipeline/config.json` field `refinement.convergence_threshold` (default: 0.7). If 70% or more of the current issues were also present in the previous iteration, the fixer is not making progress. Lower values are more aggressive about escalating, higher values give the loop more chances.
+
+**Important:** The `previous_issues` variable is scoped per ring (separate `previous_ring1_issues` and `previous_ring2_issues` in the `refine()` function). This prevents false convergence detection when the loop transitions between rings — Ring 1 issues and Ring 2 issues have different rule IDs and should never be compared against each other.
 
 **Why issue identity, not issue count:** The detector compares `(rule, reference)` pairs, not counts. This catches the case where the fixer resolves one issue but introduces a new one — the count stays the same but it's making progress.
 
@@ -297,7 +302,7 @@ When the loop cannot resolve issues, it produces an escalation report for human 
   "iterations_completed": 4,
   "unresolved_issues": [
     {
-      "rule": "R2-12",
+      "rule": "R2-I12",
       "reference": "Background section",
       "description": "Does not name specific file paths for the SOAP client wrapper"
     }
@@ -407,11 +412,26 @@ function on_spec_change(spec_id):
         set_status(impl_id, "draft")
         impl = load(impl_id)
         for task_id in impl.atomic_tasks:
-            mark_stale(task_id)
+            # Mark existing execution records as abandoned.
+            # "abandoned" indicates the task's parent was invalidated
+            # before or during execution — distinct from "failed"
+            # (which means the task was attempted and did not pass).
+            latest_record = get_latest_execution_record(task_id)
+            if latest_record and latest_record.status in ("pending", "running"):
+                latest_record.status = "abandoned"
+                latest_record.finished_at = now()
+                save(latest_record)
 
-    # Re-run the full pipeline
-    run_pipeline(spec_id)
+    # Re-run the pipeline, passing existing impl docs for
+    # incremental re-decomposition. The generation prompt receives
+    # existing documents and may preserve, modify, or replace them.
+    # WARNING: This is a destructive operation — existing atomic
+    # tasks and execution records may be orphaned if impl doc
+    # boundaries change. Callers should confirm before proceeding.
+    run_pipeline(spec_id, existing_impl_docs=spec.implementation_docs)
 ```
+
+**Behavior note:** Re-decomposition passes existing implementation documents to the generation prompt via the `existing_impl_docs` parameter. The generation prompt (defined in [Implementation Doc Schema](02-implementation-doc-schema.md)) has an "Existing implementation documents (if re-decomposing)" input field specifically for this purpose. The decomposition agent may choose to preserve existing boundaries, adjust them, or create entirely new documents based on the spec changes. When impl doc boundaries change, previously generated atomic tasks and execution records for removed impl docs become orphaned and should be cleaned up.
 
 ### Incremental Validation
 
@@ -422,9 +442,9 @@ When a single document changes, only affected rules re-run:
 | Spec markdown edited | Ring 0-S + Ring 1-S + Ring 2-S for that spec. If pass, re-run CL-S rules. If spec version incremented, trigger on_spec_change. |
 | Impl doc markdown edited | Rings 0+1+2 for that doc. If pass, re-run CL-T rules for its atomic tasks. |
 | Task description edited | Rings 0+1+2 for that task. Re-run CL-T03, CL-T04 for its parent. |
-| Task definition edited | Ring 0 for that task. R0-07 for all referenced tasks. CL-T01, CL-T05. |
+| Task definition edited | Ring 0 for that task. R0-T07 for all referenced tasks. CL-T01, CL-T05. |
 | New impl doc added to spec | CL-S01, CL-S03 for spec. Full Ring 0+1+2 for new doc. |
-| New task added to impl | CL-T01, CL-T03, CL-T04 for parent. Full Ring 0+1+2 for new task. R0-07 for referenced deps. |
+| New task added to impl | CL-T01, CL-T03, CL-T04 for parent. Full Ring 0+1+2 for new task. R0-T07 for referenced deps. |
 
 ---
 
@@ -447,7 +467,7 @@ These rules span document boundaries. All are deterministic (Ring 0 level). They
 |---|---|
 | CL-T01 | **Bidirectional consistency:** every task's `parent` references an impl doc that lists that task in its `atomic_tasks` array, and vice versa |
 | CL-T02 | Every impl doc with `status: decomposed` has ≥1 atomic task |
-| CL-T03 | **Complete module coverage:** The union of all `scope.modules` across an impl doc's atomic tasks must exactly equal the impl doc's `modules`. Every declared module must be claimed by at least one task. A module should only be declared in an impl doc if at least one task will operate within it. For transitive dependencies (e.g., shared type modules accessed indirectly), include the module in a task's `scope.modules` if the task directly depends on it. |
+| CL-T03 | Every module in the impl doc's `modules` list appears in at least one child task's `scope.modules`, and every child task's `scope.modules` is a subset of the impl doc's `modules` (full coverage without boundary violations) |
 | CL-T04 | The union of all `context_refs` across an impl doc's atomic tasks covers all entries in the impl doc's `spec_sections` (full traceability) |
 | CL-T05 | Dependency ordering between impl docs is consistent with the `blocked_by`/`blocks` graph of their atomic tasks |
 
