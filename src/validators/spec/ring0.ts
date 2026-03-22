@@ -200,9 +200,15 @@ export function validateSpecRing0(spec: SpecDefinition, markdown: string): Ring0
     ),
   );
 
-  // R0-S13: All FR-XX and NFR-XX identifiers are unique across the document
-  const allFrMatches = markdown.match(/FR-\d{2}/g) ?? [];
-  const allNfrMatches = markdown.match(/NFR-\d{2}/g) ?? [];
+  // R0-S13: All FR-XX and NFR-XX identifiers are unique within their defining sections
+  // FR-XX identifiers are checked within the Functional Requirements section only,
+  // NFR-XX within the Non-Functional Requirements section only. References to these
+  // identifiers in other sections (e.g., Decomposition Guidance) are not duplicates.
+  const frSectionContent = frSection?.content ?? '';
+  const nfrSection = h2s.find((h) => h.text === 'Non-Functional Requirements');
+  const nfrSectionContent = nfrSection?.content ?? '';
+  const allFrMatches = frSectionContent.match(/FR-\d{2}/g) ?? [];
+  const allNfrMatches = nfrSectionContent.match(/NFR-\d{2}/g) ?? [];
   const allIdentifiers = [...allFrMatches, ...allNfrMatches];
   const uniqueIdentifiers = new Set(allIdentifiers);
   const identifiersUnique = allIdentifiers.length === uniqueIdentifiers.size;
@@ -214,7 +220,7 @@ export function validateSpecRing0(spec: SpecDefinition, markdown: string): Ring0
       'R0-S13',
       identifiersUnique,
       identifiersUnique
-        ? 'All FR-XX and NFR-XX identifiers are unique'
+        ? 'All FR-XX and NFR-XX identifiers are unique within their sections'
         : `Duplicate identifiers found: ${[...new Set(duplicates)].join(', ')}`,
     ),
   );

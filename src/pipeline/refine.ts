@@ -143,7 +143,7 @@ function runRing0(
       return { passed: result.valid, failures };
     }
     case "spec": {
-      const jsonPath = documentPath.replace(/\.md$/, ".json");
+      const jsonPath = documentPath.replace("/descriptions/", "/definitions/").replace(/\.md$/, ".json");
       const spec: SpecDefinition = JSON.parse(
         fs.readFileSync(jsonPath, "utf-8"),
       );
@@ -160,7 +160,7 @@ function runRing0(
       return { passed: result.valid, failures };
     }
     case "impl": {
-      const jsonPath = documentPath.replace(/\.md$/, ".json");
+      const jsonPath = documentPath.replace("/descriptions/", "/definitions/").replace(/\.md$/, ".json");
       const impl: ImplDefinition = JSON.parse(
         fs.readFileSync(jsonPath, "utf-8"),
       );

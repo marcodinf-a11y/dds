@@ -393,8 +393,8 @@ export async function runPipeline(
   // Phase 1: Validate the root spec
   // ---------------------------------------------------------------------------
 
-  const specJsonPath = path.resolve("specs", `${specId}.json`);
-  const specMdPath = path.resolve("specs", `${specId}.md`);
+  const specJsonPath = path.resolve("specs", "definitions", `${specId}.json`);
+  const specMdPath = path.resolve("specs", "descriptions", `${specId}.md`);
 
   const specRefineResult = await callRefine(specMdPath, "spec", resolved);
   stats.documentsValidated.spec++;
@@ -451,11 +451,13 @@ export async function runPipeline(
     const implMd = parsedImplDocs.markdowns[i] ?? "";
 
     // Write JSON and Markdown artifacts to implementation/ directory
-    const implDir = path.resolve("implementation");
-    fs.mkdirSync(implDir, { recursive: true });
+    const implDefsDir = path.resolve("implementation", "definitions");
+    const implDescsDir = path.resolve("implementation", "descriptions");
+    fs.mkdirSync(implDefsDir, { recursive: true });
+    fs.mkdirSync(implDescsDir, { recursive: true });
 
-    const implJsonPath = path.join(implDir, `${implDef.id}.json`);
-    const implMdPath = path.join(implDir, `${implDef.id}.md`);
+    const implJsonPath = path.join(implDefsDir, `${implDef.id}.json`);
+    const implMdPath = path.join(implDescsDir, `${implDef.id}.md`);
 
     writeJson(implJsonPath, implDef);
     fs.writeFileSync(implMdPath, implMd, "utf-8");
@@ -496,8 +498,8 @@ export async function runPipeline(
   const allTasks: TaskDefinition[] = [];
 
   for (const implDef of generatedImplDocs) {
-    const implJsonPath = path.resolve("implementation", `${implDef.id}.json`);
-    const implMdPath = path.resolve("implementation", `${implDef.id}.md`);
+    const implJsonPath = path.resolve("implementation", "definitions", `${implDef.id}.json`);
+    const implMdPath = path.resolve("implementation", "descriptions", `${implDef.id}.md`);
 
     const implMarkdown = readText(implMdPath);
 
@@ -634,7 +636,7 @@ export async function runPipeline(
   // CL-F01, CL-F02: Full-stack traceability
   const implMarkdowns = new Map<string, string>();
   for (const implDef of generatedImplDocs) {
-    const implMdPath = path.resolve("implementation", `${implDef.id}.md`);
+    const implMdPath = path.resolve("implementation", "descriptions", `${implDef.id}.md`);
     try {
       implMarkdowns.set(implDef.id, readText(implMdPath));
     } catch {
@@ -694,7 +696,7 @@ export async function onSpecChange(
   specId: string,
   config?: PipelineConfig,
 ): Promise<PipelineResult> {
-  const specJsonPath = path.resolve("specs", `${specId}.json`);
+  const specJsonPath = path.resolve("specs", "definitions", `${specId}.json`);
 
   // 1. Read spec JSON and increment version
   const specJson = readJson<SpecDefinition>(specJsonPath);
@@ -706,7 +708,7 @@ export async function onSpecChange(
 
   // 3. Revert downstream impl docs to 'draft'
   for (const implId of existingImplDocIds) {
-    const implJsonPath = path.resolve("implementation", `${implId}.json`);
+    const implJsonPath = path.resolve("implementation", "definitions", `${implId}.json`);
     try {
       const implJson = readJson<ImplDefinition>(implJsonPath);
       implJson.status = "draft";
