@@ -43,7 +43,17 @@ Set verdict to "fail" if any inconsistencies are found, and list each one in the
 export function buildR1S02Prompt(specMarkdown: string): string {
   return `You are a specification reviewer. Analyze the following specification document for requirement atomicity.
 
-Examine each functional requirement (FR-XX) and non-functional requirement (NFR-XX) in the document. Each requirement should define exactly one testable behavior or constraint. Flag any requirement that is compound (contains "and" joining two distinct behaviors), vague, or not independently testable.
+Examine each functional requirement (FR-XX) and non-functional requirement (NFR-XX) in the document. Each requirement should define exactly one testable behavior or constraint.
+
+**What IS atomic (do NOT flag these):**
+- A requirement that enumerates values of a single concept (e.g., "status shall be one of: draft, validated, decomposed" — this is one enum, not three requirements)
+- A requirement that lists ordered sections or hierarchy levels (e.g., "shall contain these H2 sections in order: A, B, C" — this is one structural rule)
+- A requirement that defines a field together with its semantics (e.g., "shall include a verify field containing a shell command that passes on exit code 0" — field and behavior are inseparable)
+- A requirement with a clarifying clause that restates or elaborates the main rule without adding an independently testable behavior
+
+**What is NOT atomic (flag these):**
+- A requirement that joins two independently testable behaviors with "and" where each could be implemented and verified separately
+- A requirement that describes two unrelated side effects of the same trigger that could reasonably be split
 
 <spec-content>
 ${specMarkdown}
@@ -55,14 +65,14 @@ Respond with ONLY a JSON object in this exact structure (no markdown fencing, no
   "verdict": "pass" | "fail",
   "issues": [
     {
-      "reference": "string — section, ID, or line where the issue occurs",
-      "description": "string — what specifically is wrong"
+      "reference": "string — the FR-XX or NFR-XX identifier",
+      "description": "string — what specifically makes it non-atomic, citing the two independent behaviors"
     }
   ]
 }
 
 If no issues are found, return an empty issues array with verdict "pass".
-Set verdict to "fail" if any requirement is compound, vague, or not independently testable, and list each one in the issues array as an object with reference and description.`;
+Set verdict to "fail" only if a requirement contains genuinely independent behaviors that should be separate requirements.`;
 }
 
 /**

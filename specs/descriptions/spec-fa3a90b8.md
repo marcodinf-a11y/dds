@@ -180,7 +180,9 @@ The primary consumers of this system are AI coding agents (which execute atomic 
 
 - **FR-75:** The ExecutionRecord schema shall include a `finished_at` field containing an ISO 8601 timestamp, null while in progress.
 
-- **FR-76:** A single task definition may have multiple execution records representing retry attempts. Run numbers shall be sequential per task_id with no gaps.
+- **FR-76:** A single task definition may have multiple execution records representing retry attempts.
+
+- **FR-78:** Execution record run numbers shall be sequential per task_id with no gaps.
 
 - **FR-77:** When a task's parent implementation document is invalidated (reverts to draft status), any execution records for that task with status `pending` or `running` shall be updated to `abandoned` status with `finished_at` set to the current time.
 
