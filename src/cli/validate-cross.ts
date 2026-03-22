@@ -4,14 +4,17 @@
  * Usage: npx tsx src/cli/validate-cross.ts <spec-id>
  *
  * Parses a root spec ID, loads the full document tree (specs, impl docs, tasks),
- * runs all cross-level invariant validators (CL-F01, CL-F02), prints per-invariant
- * results, and exits 0 if all pass or 1 if any fail.
+ * runs all cross-level invariant validators (CL-S01..CL-S04, CL-T01..CL-T05,
+ * CL-F01, CL-F02), prints per-invariant results, and exits 0 if all pass or
+ * 1 if any fail.
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import type { SpecDefinition, ImplDefinition, TaskDefinition } from '../types/definitions.js';
+import { validateSpecImplCrossLevel } from '../validators/cross-level/spec-impl.js';
+import { validateImplTaskCrossLevel } from '../validators/cross-level/impl-task.js';
 import {
   validateCLF01,
   validateCLF02,
@@ -20,20 +23,16 @@ import type { FullStackTraceabilityContext, CrossLevelResult } from '../validato
 
 function loadJsonFiles<T>(dir: string): T[] {
   if (!fs.existsSync(dir)) return [];
-
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
-  const results: T[] = [];
-
-  for (const file of files) {
-    try {
-      const content = fs.readFileSync(path.join(dir, file), 'utf-8');
-      results.push(JSON.parse(content) as T);
-    } catch {
-      // Skip malformed files
-    }
-  }
-
-  return results;
+  return fs.readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => {
+      try {
+        return JSON.parse(fs.readFileSync(path.join(dir, f), 'utf-8')) as T;
+      } catch {
+        return null;
+      }
+    })
+    .filter((x): x is T => x !== null);
 }
 
 function loadMarkdownMap(dir: string): Map<string, string> {
@@ -66,6 +65,7 @@ async function main(): Promise<void> {
   const specs = loadJsonFiles<SpecDefinition>(path.resolve('specs', 'definitions'));
   const implDocs = loadJsonFiles<ImplDefinition>(path.resolve('implementations', 'definitions'));
   const tasks = loadJsonFiles<TaskDefinition>(path.resolve('tasks', 'definitions'));
+  const specMarkdowns = loadMarkdownMap(path.resolve('specs', 'descriptions'));
   const implMarkdowns = loadMarkdownMap(path.resolve('implementations', 'descriptions'));
 
   // Filter to documents related to the given spec
@@ -78,22 +78,52 @@ async function main(): Promise<void> {
   const relevantImpls = implDocs.filter((impl) => relevantImplIds.has(impl.id));
   const relevantTasks = tasks.filter((t) => relevantImplIds.has(t.parent));
 
-  const context: FullStackTraceabilityContext = {
+  let allPassed = true;
+
+  // --- CL-S01..CL-S04: Spec-Impl cross-level checks ---
+  const rootSpec = relevantSpecs[0];
+  if (rootSpec) {
+    const specMarkdown = specMarkdowns.get(specId) ?? '';
+    const specImplResult = validateSpecImplCrossLevel(rootSpec, relevantImpls, specMarkdown);
+
+    for (const r of specImplResult.results) {
+      const status = r.passed ? 'PASS' : 'FAIL';
+      process.stdout.write(`[${status}] ${r.rule}`);
+      if (r.message) {
+        process.stdout.write(`: ${r.message}`);
+      }
+      process.stdout.write('\n');
+      if (!r.passed) {
+        allPassed = false;
+      }
+    }
+  }
+
+  // --- CL-T01..CL-T05: Impl-Task cross-level checks ---
+  const implTaskResult = validateImplTaskCrossLevel(relevantImpls, relevantTasks);
+
+  for (const r of implTaskResult.checks) {
+    const status = r.pass ? 'PASS' : 'FAIL';
+    process.stdout.write(`[${status}] ${r.rule}: ${r.message}\n`);
+    if (!r.pass) {
+      allPassed = false;
+    }
+  }
+
+  // --- CL-F01, CL-F02: Full-stack traceability checks ---
+  const fullStackContext: FullStackTraceabilityContext = {
     specs: relevantSpecs,
     implDocs: relevantImpls,
     tasks: relevantTasks,
     implMarkdowns,
   };
 
-  // Run all cross-level validators
-  const results: CrossLevelResult[] = [
-    validateCLF01(context),
-    validateCLF02(context),
+  const fullStackResults: CrossLevelResult[] = [
+    validateCLF01(fullStackContext),
+    validateCLF02(fullStackContext),
   ];
 
-  let allPassed = true;
-
-  for (const result of results) {
+  for (const result of fullStackResults) {
     const status = result.passed ? 'PASS' : 'FAIL';
     process.stdout.write(`[${status}] ${result.rule}\n`);
 
