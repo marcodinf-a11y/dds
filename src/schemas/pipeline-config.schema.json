@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PipelineConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "_description": {
+      "type": "string"
+    },
+    "refinement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "convergence_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "timeouts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ring1_check_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ring2_check_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "fix_call_seconds": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "claude_cli": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_retries_on_short_429": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "backoff_multiplier": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "delay_between_calls_ms": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
