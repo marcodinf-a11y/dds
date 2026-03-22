@@ -173,7 +173,7 @@ function runRing0(
       const result = validateImplRing0(impl, documentContent, context);
 
       const failures = result.results
-        .filter((r) => !r.pass)
+        .filter((r) => !r.passed)
         .map((r) => ({
           rule: r.rule,
           passed: false,
