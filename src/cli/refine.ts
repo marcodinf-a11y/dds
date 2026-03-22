@@ -9,13 +9,14 @@
  */
 
 import { loadConfig } from '../llm/claude-cli.js';
+import { refine, type DocumentLevel } from '../pipeline/refine.js';
 
 async function main(): Promise<void> {
-  const documentId = process.argv[2];
+  const documentPath = process.argv[2];
   const level = process.argv[3];
 
-  if (!documentId || !level) {
-    process.stderr.write('Usage: refine <document-id> <level>\n');
+  if (!documentPath || !level) {
+    process.stderr.write('Usage: refine <document-path> <level>\n');
     process.stderr.write('  level: spec | impl | task\n');
     process.exit(1);
   }
@@ -28,18 +29,16 @@ async function main(): Promise<void> {
 
   const config = loadConfig();
 
-  // Placeholder: refine() is provided by the pipeline orchestrator.
-  // Once integrated, this would be:
-  // import { refine } from '../pipeline/refine.js';
-  // const result = await refine(documentId, level, config);
+  const result = refine(documentPath, level as DocumentLevel, config);
 
-  // For now, report that the refinement module is not yet integrated.
-  void config;
-
-  process.stdout.write(`Refinement for ${documentId} (${level}): not yet integrated with pipeline orchestrator.\n`);
-  process.stdout.write('Result: promoted (placeholder)\n');
-
-  process.exit(0);
+  if ('promoted' in result) {
+    process.stdout.write(`Refinement for ${documentPath} (${level}): promoted\n`);
+    process.exit(0);
+  } else {
+    process.stdout.write(`Refinement for ${documentPath} (${level}): escalated\n`);
+    process.stderr.write(`Escalation report: ${result.report}\n`);
+    process.exit(1);
+  }
 }
 
 main().catch((err: unknown) => {

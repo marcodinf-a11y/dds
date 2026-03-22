@@ -7,9 +7,9 @@
  * writes a summary report, and exits with appropriate code.
  */
 
-import { loadConfig } from '../llm/claude-cli.js';
+import { runPipeline } from '../pipeline/orchestrate.js';
 import { generateReport } from './report.js';
-import type { PipelineResult } from './report.js';
+import type { PipelineResult as ReportPipelineResult } from './report.js';
 
 async function main(): Promise<void> {
   const specId = process.argv[2];
@@ -19,34 +19,32 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const config = loadConfig();
-
-  // Placeholder: runPipeline is provided by the pipeline orchestrator (at-0b694e5d).
-  // Once integrated, this would be: const result = await runPipeline(specId, config);
-  // For now, we construct a minimal result to satisfy the type contract.
   const startedAt = new Date().toISOString();
+  const result = await runPipeline(specId);
+  const finishedAt = new Date().toISOString();
 
-  // The actual runPipeline call would go here:
-  // import { runPipeline } from '../pipeline/orchestrator.js';
-  // const result = await runPipeline(specId, config);
-
-  // Placeholder result structure for compilation.
-  const result: PipelineResult = {
-    rootSpecId: specId,
-    status: 'completed',
+  // Adapt the orchestrator's PipelineResult to the report's PipelineResult shape.
+  const reportResult: ReportPipelineResult = {
+    rootSpecId: result.rootSpecId,
+    status: result.status,
     startedAt,
-    finishedAt: new Date().toISOString(),
-    documentResults: [],
-    crossLevelChecksPassed: 0,
-    totalLlmCalls: 0,
-    totalTokenUsage: 0,
-    escalationCount: 0,
+    finishedAt,
+    documentResults: result.perDocumentResults.map((d) => ({
+      id: d.id,
+      level: d.level as 'spec' | 'impl' | 'task',
+      status: (d.status === 'validated' ? 'passed' : 'failed') as 'passed' | 'failed' | 'skipped',
+      ring0_passed: d.ring0Passed,
+      ring1_passed: d.ring1Passed,
+      ring2_passed: d.ring2Passed,
+      iteration_count: d.iterations,
+    })),
+    crossLevelChecksPassed: result.stats.crossLevelChecksPassed,
+    totalLlmCalls: result.stats.totalLlmCalls,
+    totalTokenUsage: result.stats.totalTokenUsage,
+    escalationCount: result.stats.escalationCount,
   };
 
-  // Suppress unused variable warning — config will be passed to runPipeline.
-  void config;
-
-  const reportPath = generateReport(result);
+  const reportPath = generateReport(reportResult);
   process.stdout.write(`Pipeline completed. Report: ${reportPath}\n`);
   process.stdout.write(`Status: ${result.status}\n`);
 
