@@ -63,10 +63,12 @@ export function extractHeadings(markdown: string): HeadingInfo[] {
       const slug = generateSlug(text);
       const startLine = i + 1; // 1-based
 
-      // Collect content lines until the next heading
+      // Collect content lines until the next heading at the same or shallower level.
+      // Child headings (deeper level) are included in the parent's content.
       const contentLines: string[] = [];
       for (let j = i + 1; j < lines.length; j++) {
-        if (/^#{1,6}\s+/.test(lines[j])) break;
+        const headingMatch = lines[j].match(/^(#{1,6})\s+/);
+        if (headingMatch && headingMatch[1].length <= level) break;
         contentLines.push(lines[j]);
       }
       const content = contentLines.join('\n').trim();
@@ -75,13 +77,17 @@ export function extractHeadings(markdown: string): HeadingInfo[] {
     }
   }
 
-  // Compute endLine for each heading
+  // Compute endLine for each heading: extends to just before the next heading
+  // at the same or shallower level, so that child headings are encompassed.
   for (let i = 0; i < headings.length; i++) {
-    if (i + 1 < headings.length) {
-      headings[i].endLine = headings[i + 1].startLine - 1;
-    } else {
-      headings[i].endLine = totalLines;
+    let endLine = totalLines;
+    for (let j = i + 1; j < headings.length; j++) {
+      if (headings[j].level <= headings[i].level) {
+        endLine = headings[j].startLine - 1;
+        break;
+      }
     }
+    headings[i].endLine = endLine;
   }
 
   return headings;
