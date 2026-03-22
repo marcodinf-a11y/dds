@@ -174,7 +174,7 @@ export function callClaude<T = unknown>(
       lastCallTimestamp = Date.now();
 
       const stdout = execSync(
-        `claude -p ${shellQuote(prompt)} --output-format json --json-schema ${shellQuote(schemaArg)} --max-turns 3`,
+        `claude -p ${shellQuote(prompt)} --output-format json --json-schema ${shellQuote(schemaArg)} --max-turns 1 --tools ""`,
         { timeout: timeoutMs, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
       );
 
