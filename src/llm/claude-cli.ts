@@ -178,19 +178,35 @@ export function callClaude<T = unknown>(
         { timeout: timeoutMs, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
       );
 
-      const result = JSON.parse(stdout);
+      const wrapper = JSON.parse(stdout);
+
+      // Claude CLI with --output-format json returns a wrapper object.
+      // The actual LLM response is in the `result` field as a string.
+      const rawResult = typeof wrapper === 'object' && wrapper !== null && 'result' in wrapper
+        ? wrapper.result
+        : wrapper;
+
+      // The result may be a string (possibly with markdown code fences) or already parsed JSON
+      let parsed: unknown;
+      if (typeof rawResult === 'string') {
+        // Strip markdown code fences if present
+        const cleaned = rawResult.replace(/^```(?:json)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+        parsed = JSON.parse(cleaned);
+      } else {
+        parsed = rawResult;
+      }
 
       // Double-validate with ajv
       const ajv = new Ajv();
       const validate = ajv.compile(jsonSchema);
-      if (!validate(result)) {
+      if (!validate(parsed)) {
         const msg = validate.errors
           ?.map((e: { instancePath: string; message?: string }) => `${e.instancePath} ${e.message}`)
           .join('; ');
         throw new Error(`Response schema validation failed: ${msg}`);
       }
 
-      return result as T;
+      return parsed as T;
     } catch (err: unknown) {
       const retryAfter = parseRetryAfter(err);
 
