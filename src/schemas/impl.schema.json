@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ImplementationDefinition",
+  "type": "object",
+  "required": ["id", "spec_sections", "description", "modules", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^impl-[0-9a-f]{8}$",
+      "description": "Unique identifier. Generated as 8 random hex characters with 'impl-' prefix."
+    },
+    "spec_sections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^spec-[0-9a-f]{8}#[a-z0-9-]+$"
+      },
+      "minItems": 1,
+      "description": "Spec section references this implementation document covers."
+    },
+    "description": {
+      "type": "string",
+      "pattern": "^impl-[0-9a-f]{8}\\.md$",
+      "description": "Filename of the markdown description document for this implementation document."
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Logical modules this implementation document operates within."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "validated", "decomposed"],
+      "description": "Current lifecycle status of the implementation document."
+    },
+    "atomic_tasks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^at-[0-9a-f]{8}$"
+      },
+      "description": "IDs of atomic tasks decomposed from this implementation document."
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^impl-[0-9a-f]{8}$"
+      },
+      "description": "IDs of implementation documents this document depends on."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "enum": ["draft", "validated"] } }
+      },
+      "then": {
+        "properties": { "atomic_tasks": { "maxItems": 0 } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "decomposed" } }
+      },
+      "then": {
+        "properties": { "atomic_tasks": { "minItems": 1 } }
+      }
+    }
+  ]
+}

@@ -7,3 +7,13 @@ export interface SpecDefinition {
   implementation_docs?: string[];
   related_specs?: string[];
 }
+
+export interface ImplDefinition {
+  id: string;
+  spec_sections: string[];
+  description: string;
+  modules: string[];
+  status: 'draft' | 'validated' | 'decomposed';
+  atomic_tasks?: string[];
+  dependencies?: string[];
+}
