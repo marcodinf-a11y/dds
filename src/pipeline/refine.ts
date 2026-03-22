@@ -23,6 +23,12 @@ import {
 
 // Per-level Ring 0 validators
 import { validateTaskRing0 } from "../validators/task/ring0.js";
+import { validateSpecRing0 } from "../validators/spec/ring0.js";
+import {
+  validateImplRing0,
+  type ImplValidationContext,
+} from "../validators/impl/ring0.js";
+import type { SpecDefinition, ImplDefinition } from "../types/definitions.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -136,14 +142,46 @@ function runRing0(
 
       return { passed: result.valid, failures };
     }
-    case "spec":
-      throw new Error(
-        "Spec-level Ring 0 validator is not yet implemented.",
+    case "spec": {
+      const jsonPath = documentPath.replace(/\.md$/, ".json");
+      const spec: SpecDefinition = JSON.parse(
+        fs.readFileSync(jsonPath, "utf-8"),
       );
-    case "impl":
-      throw new Error(
-        "Impl-level Ring 0 validator is not yet implemented.",
+      const result = validateSpecRing0(spec, documentContent);
+
+      const failures = result.results
+        .filter((r) => !r.passed)
+        .map((r) => ({
+          rule: r.rule,
+          passed: false,
+          message: r.message,
+        }));
+
+      return { passed: result.valid, failures };
+    }
+    case "impl": {
+      const jsonPath = documentPath.replace(/\.md$/, ".json");
+      const impl: ImplDefinition = JSON.parse(
+        fs.readFileSync(jsonPath, "utf-8"),
       );
+      const context: ImplValidationContext = {
+        existingImplIds: [],
+        existingTaskIds: [],
+        taskDefinitions: [],
+        dependencyGraph: [],
+      };
+      const result = validateImplRing0(impl, documentContent, context);
+
+      const failures = result.results
+        .filter((r) => !r.pass)
+        .map((r) => ({
+          rule: r.rule,
+          passed: false,
+          message: r.message,
+        }));
+
+      return { passed: result.valid, failures };
+    }
     default: {
       const _exhaustive: never = level;
       throw new Error(`Unknown document level: ${_exhaustive}`);
