@@ -1,0 +1,20 @@
+{
+  "id": "at-aaaa0001",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-aaaa0001.md",
+  "blocked_by": [],
+  "blocks": ["at-aaaa0002"],
+  "scope": {
+    "files": ["src/foo.ts"],
+    "modules": ["foo"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-bbb00001",
+      "type": "build",
+      "description": "Build succeeds",
+      "verify": "npx tsc --noEmit"
+    }
+  ],
+  "context_refs": ["spec-fa3a90b8#atomic-tasks"]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "at-dddd0001",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-dddd0001.md",
+  "blocked_by": [],
+  "blocks": [],
+  "scope": {
+    "files": ["src/foo.ts"],
+    "modules": ["foo"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-ddd00001",
+      "type": "build",
+      "description": "Build succeeds",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-ddd00001",
+      "type": "test",
+      "description": "Tests pass",
+      "verify": "npx vitest run"
+    }
+  ],
+  "context_refs": ["spec-fa3a90b8#atomic-tasks"]
+}

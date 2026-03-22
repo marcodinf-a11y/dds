@@ -1,0 +1,21 @@
+{
+  "id": "at-a1b2c3d4",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-a1b2c3d4.md",
+  "blocked_by": [],
+  "blocks": [],
+  "scope": {
+    "files": ["src/foo.ts"],
+    "modules": ["foo"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-aaa11111",
+      "type": "build",
+      "description": "Build succeeds",
+      "verify": "npx tsc --noEmit"
+    }
+  ],
+  "context_refs": ["spec-fa3a90b8#atomic-tasks"],
+  "extra_invalid_field": "should cause schema validation to fail"
+}
