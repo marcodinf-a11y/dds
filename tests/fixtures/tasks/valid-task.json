@@ -1,0 +1,34 @@
+{
+  "id": "at-a1b2c3d4",
+  "parent": "impl-9f4b1c7d",
+  "description": "at-a1b2c3d4.md",
+  "blocked_by": ["at-11111111"],
+  "blocks": ["at-22222222"],
+  "scope": {
+    "files": ["src/validators/task/ring0.ts"],
+    "modules": ["task-validation"]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "ac-aaa11111",
+      "type": "test",
+      "description": "Unit tests pass",
+      "verify": "npx vitest run tests/unit/ring0/task-validator.test.ts"
+    },
+    {
+      "id": "ac-aaa22222",
+      "type": "build",
+      "description": "Build succeeds",
+      "verify": "npx tsc --noEmit"
+    },
+    {
+      "id": "ac-aaa33333",
+      "type": "review",
+      "description": "Code follows patterns",
+      "rubric": "Check that the code follows existing patterns. PASS if consistent, FAIL if not."
+    }
+  ],
+  "context_refs": [
+    "spec-fa3a90b8#atomic-tasks"
+  ]
+}

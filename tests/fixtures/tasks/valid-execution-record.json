@@ -1,0 +1,14 @@
+{
+  "task_id": "at-a1b2c3d4",
+  "run": 1,
+  "status": "completed",
+  "criteria_results": [
+    { "criterion_id": "ac-aaa11111", "verdict": "pass", "output": "All tests passed" },
+    { "criterion_id": "ac-aaa22222", "verdict": "pass", "output": "Build succeeded" },
+    { "criterion_id": "ac-aaa33333", "verdict": "pass", "output": "PASS: Code follows patterns" }
+  ],
+  "commits": ["abc1234"],
+  "scope_violations": [],
+  "started_at": "2026-03-21T10:00:00Z",
+  "finished_at": "2026-03-21T10:04:32Z"
+}

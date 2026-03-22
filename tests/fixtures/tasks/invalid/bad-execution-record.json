@@ -1,0 +1,10 @@
+{
+  "task_id": "at-a1b2c3d4",
+  "run": 3,
+  "status": "completed",
+  "criteria_results": [
+    { "criterion_id": "ac-aaa11111", "verdict": "pass", "output": "Passed" }
+  ],
+  "started_at": "2026-03-21T10:00:00Z",
+  "finished_at": "2026-03-21T10:04:32Z"
+}
