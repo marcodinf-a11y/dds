@@ -19,6 +19,23 @@ import {
   buildCriterionCompletenessPrompt,
 } from '../validators/task/ring2.js';
 
+// Per-level prompt template imports — spec level
+import {
+  buildR2S01Prompt,
+  buildR2S02Prompt,
+  buildR2S03Prompt,
+} from '../validators/spec/ring2.js';
+
+// Per-level prompt template imports — impl level
+import {
+  buildDecomposabilityPrompt,
+  buildRequirementTestabilityPrompt,
+  buildBackgroundSufficiencyPrompt,
+  buildDesignDecisionCompletenessPrompt,
+  buildBoundaryPrompt,
+  buildDecompositionNotesQualityPrompt,
+} from '../validators/impl/ring2.js';
+
 // ---------------------------------------------------------------------------
 // Shared Ring 2 System Prompt (from docs/04-validation-pipeline.md)
 // ---------------------------------------------------------------------------
@@ -101,6 +118,48 @@ function getTaskRing2Prompt(
   }
 }
 
+function getSpecRing2Prompt(
+  ruleId: string,
+  documentContent: string,
+): string {
+  switch (ruleId) {
+    case 'R2-S01':
+      return buildR2S01Prompt(documentContent);
+    case 'R2-S02':
+      return buildR2S02Prompt(documentContent);
+    case 'R2-S03':
+      return buildR2S03Prompt(documentContent);
+    default:
+      throw new Error(
+        `Unknown spec-level Ring 2 rule: ${ruleId}`,
+      );
+  }
+}
+
+function getImplRing2Prompt(
+  ruleId: string,
+  documentContent: string,
+): string {
+  switch (ruleId) {
+    case 'R2-I10':
+      return buildDecomposabilityPrompt(documentContent);
+    case 'R2-I11':
+      return buildRequirementTestabilityPrompt(documentContent);
+    case 'R2-I12':
+      return buildBackgroundSufficiencyPrompt(documentContent);
+    case 'R2-I13':
+      return buildDesignDecisionCompletenessPrompt(documentContent);
+    case 'R2-I14':
+      return buildBoundaryPrompt(documentContent);
+    case 'R2-I15':
+      return buildDecompositionNotesQualityPrompt(documentContent);
+    default:
+      throw new Error(
+        `Unknown impl-level Ring 2 rule: ${ruleId}`,
+      );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -128,13 +187,11 @@ export function runRing2Check(
       perLevelPrompt = getTaskRing2Prompt(ruleId, documentContent);
       break;
     case 'spec':
-      throw new Error(
-        'Spec-level Ring 2 prompt templates are not yet implemented.',
-      );
+      perLevelPrompt = getSpecRing2Prompt(ruleId, documentContent);
+      break;
     case 'impl':
-      throw new Error(
-        'Impl-level Ring 2 prompt templates are not yet implemented.',
-      );
+      perLevelPrompt = getImplRing2Prompt(ruleId, documentContent);
+      break;
     default: {
       const _exhaustive: never = level;
       throw new Error(`Unknown document level: ${_exhaustive}`);

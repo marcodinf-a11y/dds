@@ -18,6 +18,24 @@ import {
   buildDependencyCorrectnessPrompt,
 } from '../validators/task/ring1.js';
 
+// Per-level prompt template imports — spec level
+import {
+  buildR1S01Prompt,
+  buildR1S02Prompt,
+  buildR1S03Prompt,
+  buildR1S04Prompt,
+} from '../validators/spec/ring1.js';
+
+// Per-level prompt template imports — impl level
+import {
+  buildSpecCoveragePrompt,
+  buildOutOfScopeConsistencyPrompt,
+  buildDesignDecisionCoherencePrompt,
+  buildDependencyCompletenessPrompt,
+  buildDecompositionCoveragePrompt,
+  buildCrossImplementationContradictionPrompt,
+} from '../validators/impl/ring1.js';
+
 // ---------------------------------------------------------------------------
 // Shared Ring 1 System Prompt (from docs/04-validation-pipeline.md)
 // ---------------------------------------------------------------------------
@@ -103,6 +121,50 @@ function getTaskRing1Prompt(
   }
 }
 
+function getSpecRing1Prompt(
+  ruleId: string,
+  documentContent: string,
+): string {
+  switch (ruleId) {
+    case 'R1-S01':
+      return buildR1S01Prompt(documentContent);
+    case 'R1-S02':
+      return buildR1S02Prompt(documentContent);
+    case 'R1-S03':
+      return buildR1S03Prompt(documentContent, []);
+    case 'R1-S04':
+      return buildR1S04Prompt(documentContent);
+    default:
+      throw new Error(
+        `Unknown spec-level Ring 1 rule: ${ruleId}`,
+      );
+  }
+}
+
+function getImplRing1Prompt(
+  ruleId: string,
+  documentContent: string,
+): string {
+  switch (ruleId) {
+    case 'R1-I10':
+      return buildSpecCoveragePrompt(documentContent);
+    case 'R1-I11':
+      return buildOutOfScopeConsistencyPrompt(documentContent);
+    case 'R1-I12':
+      return buildDesignDecisionCoherencePrompt(documentContent);
+    case 'R1-I13':
+      return buildDependencyCompletenessPrompt(documentContent);
+    case 'R1-I14':
+      return buildDecompositionCoveragePrompt(documentContent);
+    case 'R1-I15':
+      return buildCrossImplementationContradictionPrompt(documentContent);
+    default:
+      throw new Error(
+        `Unknown impl-level Ring 1 rule: ${ruleId}`,
+      );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -130,13 +192,11 @@ export function runRing1Check(
       perLevelPrompt = getTaskRing1Prompt(ruleId, documentContent);
       break;
     case 'spec':
-      throw new Error(
-        'Spec-level Ring 1 prompt templates are not yet implemented.',
-      );
+      perLevelPrompt = getSpecRing1Prompt(ruleId, documentContent);
+      break;
     case 'impl':
-      throw new Error(
-        'Impl-level Ring 1 prompt templates are not yet implemented.',
-      );
+      perLevelPrompt = getImplRing1Prompt(ruleId, documentContent);
+      break;
     default: {
       const _exhaustive: never = level;
       throw new Error(`Unknown document level: ${_exhaustive}`);
