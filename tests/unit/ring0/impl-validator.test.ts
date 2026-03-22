@@ -184,15 +184,10 @@ describe('graph utilities', () => {
 
 describe('validateImplRing0', () => {
   describe('valid impl passes all rules', () => {
-    it('passes all rules except R0-I62 and R0-I63 (known bugs: endLine excludes child headings)', () => {
-      // BUG: R0-I62 reports "Decomposition Notes" as empty because extractHeadings
-      // sets endLine to the line before the first H3 child, making the H2 content empty.
-      // BUG: R0-I63 cannot find H3 subsections under "Decomposition Notes" because
-      // the endLine boundary excludes lines where the H3 headings actually appear.
+    it('passes all rules for a valid impl document', () => {
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
-      const knownBugRules = new Set(['R0-I62', 'R0-I63']);
-      const nonBugResults = result.results.filter((r) => !knownBugRules.has(r.rule));
-      expect(nonBugResults.every((r) => r.pass)).toBe(true);
+      expect(result.valid).toBe(true);
+      expect(result.results.every((r) => r.pass)).toBe(true);
     });
   });
 
@@ -528,25 +523,24 @@ Task boundaries, ordering rationale, and decomposition constraints as inline tex
       expect(rule?.message).toContain('Empty H2');
     });
 
-    it('BUG: reports Decomposition Notes as empty when it only contains H3 children', () => {
-      // Known bug: extractHeadings sets endLine to the line before the first child
-      // heading, so H2 content appears empty even though it has H3 subsections.
+    it('passes when Decomposition Notes only contains H3 children (R0-I62)', () => {
+      // extractHeadings now includes child headings in the parent's content,
+      // so Decomposition Notes is not reported as empty when it has H3 subsections.
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I62');
-      expect(rule?.pass).toBe(false);
-      expect(rule?.message).toContain('Decomposition Notes');
+      expect(rule?.pass).toBe(true);
+      expect(rule?.message).toBe('All H2 sections have content');
     });
   });
 
   describe('R0-I63: 3 H3 subsections under Decomposition Notes', () => {
-    it('BUG: fails even with correct H3 subsections due to endLine boundary excluding child headings', () => {
-      // Known bug: The filter `h.startLine > decompositionNotesH2.startLine &&
-      // h.startLine <= decompositionNotesH2.endLine` never finds H3s because
-      // endLine is set to the line before the first H3 child by extractHeadings.
+    it('passes with correct H3 subsections under Decomposition Notes (R0-I63)', () => {
+      // extractHeadings now sets endLine to encompass child headings,
+      // so the H3 filter correctly finds all 3 required subsections.
       const result = validateImplRing0(validImpl, validMarkdown, makeValidContext());
       const rule = findRule(result.results, 'R0-I63');
-      expect(rule?.pass).toBe(false);
-      expect(rule?.message).toContain('Got 0');
+      expect(rule?.pass).toBe(true);
+      expect(rule?.message).toBe('Decomposition Notes has exactly 3 H3 subsections in correct order');
     });
 
     it('fails when H3 subsections are missing', () => {
