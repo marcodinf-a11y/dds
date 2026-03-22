@@ -23,6 +23,8 @@ export interface PipelineConfig {
     max_retries_on_short_429?: number;
     backoff_multiplier?: number;
     delay_between_calls_ms?: number;
+    max_turns?: number;
+    use_tools?: boolean;
   };
 }
 
@@ -40,6 +42,8 @@ export interface ResolvedConfig {
     max_retries_on_short_429: number;
     backoff_multiplier: number;
     delay_between_calls_ms: number;
+    max_turns: number;
+    use_tools: boolean;
   };
 }
 
@@ -57,6 +61,8 @@ const DEFAULTS: ResolvedConfig = {
     max_retries_on_short_429: 3,
     backoff_multiplier: 2,
     delay_between_calls_ms: 2000,
+    max_turns: 3,
+    use_tools: true,
   },
 };
 
@@ -116,6 +122,12 @@ export function loadConfig(): ResolvedConfig {
       delay_between_calls_ms:
         parsed.claude_cli?.delay_between_calls_ms ??
         DEFAULTS.claude_cli.delay_between_calls_ms,
+      max_turns:
+        parsed.claude_cli?.max_turns ??
+        DEFAULTS.claude_cli.max_turns,
+      use_tools:
+        parsed.claude_cli?.use_tools ??
+        DEFAULTS.claude_cli.use_tools,
     },
   };
 }
@@ -173,8 +185,10 @@ export function callClaude<T = unknown>(
     try {
       lastCallTimestamp = Date.now();
 
+      const maxTurns = config.claude_cli.max_turns;
+      const toolsFlag = config.claude_cli.use_tools ? '' : ' --tools ""';
       const stdout = execSync(
-        `claude -p ${shellQuote(prompt)} --output-format json --json-schema ${shellQuote(schemaArg)} --max-turns 1 --tools ""`,
+        `claude -p ${shellQuote(prompt)} --output-format json --json-schema ${shellQuote(schemaArg)} --max-turns ${maxTurns}${toolsFlag}`,
         { timeout: timeoutMs, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
       );
 

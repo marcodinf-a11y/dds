@@ -55,6 +55,13 @@
         "delay_between_calls_ms": {
           "type": "integer",
           "minimum": 0
+        },
+        "max_turns": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "use_tools": {
+          "type": "boolean"
         }
       }
     }

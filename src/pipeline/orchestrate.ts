@@ -248,6 +248,12 @@ function resolveConfig(config?: PipelineConfig): ResolvedConfig {
       delay_between_calls_ms:
         config.claude_cli?.delay_between_calls_ms ??
         defaults.claude_cli.delay_between_calls_ms,
+      max_turns:
+        config.claude_cli?.max_turns ??
+        defaults.claude_cli.max_turns,
+      use_tools:
+        config.claude_cli?.use_tools ??
+        defaults.claude_cli.use_tools,
     },
   };
 }
