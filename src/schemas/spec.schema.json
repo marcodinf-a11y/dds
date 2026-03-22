@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SpecificationDefinition",
+  "type": "object",
+  "required": ["id", "title", "description", "status", "version"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^spec-[0-9a-f]{8}$",
+      "description": "Unique identifier. Generated as 8 random hex characters with 'spec-' prefix."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable title for the specification."
+    },
+    "description": {
+      "type": "string",
+      "pattern": "^spec-[0-9a-f]{8}\\.md$",
+      "description": "Filename of the markdown description document for this specification."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "validated", "decomposed"],
+      "description": "Current lifecycle status of the specification."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version number, incremented on each revision."
+    },
+    "implementation_docs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^impl-[0-9a-f]{8}$"
+      },
+      "description": "IDs of implementation documents derived from this specification."
+    },
+    "related_specs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^spec-[0-9a-f]{8}$"
+      },
+      "description": "IDs of related specifications."
+    }
+  }
+}
