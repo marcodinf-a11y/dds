@@ -1,23 +1,55 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { validateSpecRing0 } from '../../../src/validators/spec/ring0.js';
 import type { SpecDefinition } from '../../../src/types/definitions.js';
 import type { Ring0RuleResult } from '../../../src/types/results.js';
+import validSpecJson from '../../fixtures/specs/valid-spec.json' with { type: 'json' };
 
-// --- Fixture helpers ---
+// --- Fixture data (inline / imported, no runtime fs reads) ---
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const fixturesDir = resolve(__dirname, '../../fixtures/specs');
+const validSpec: SpecDefinition = validSpecJson as SpecDefinition;
 
-const validSpec: SpecDefinition = JSON.parse(
-  readFileSync(resolve(fixturesDir, 'valid-spec.json'), 'utf-8'),
-);
-const validMarkdown: string = readFileSync(
-  resolve(fixturesDir, 'valid-spec.md'),
-  'utf-8',
-);
+const validMarkdown = `# spec-a1b2c3d4: Test Specification
+
+## Overview
+
+This is a test specification used for validating the Ring 0 spec validator. It covers a hypothetical user management system that provides authentication and authorization capabilities.
+
+## Functional Requirements
+
+FR-01: The system shall allow administrators to create new user accounts with a unique username and email address.
+
+FR-02: The system shall support password-based authentication using bcrypt hashing with a minimum cost factor of 12.
+
+FR-03: The system shall create a session token upon successful authentication that expires after 24 hours of inactivity.
+
+### User Management
+
+User management covers account creation and authentication workflows.
+
+### Session Handling
+
+Session handling covers token lifecycle and expiration policies.
+
+## Non-Functional Requirements
+
+NFR-10: The system shall respond to authentication requests within 200 milliseconds at the 95th percentile under normal load.
+
+NFR-11: The system shall support at least 1000 concurrent authenticated sessions.
+
+## System Constraints
+
+The system must be deployable on Linux-based container runtimes. All data at rest must be encrypted using AES-256. The system must not depend on external identity providers for core authentication.
+
+## Glossary
+
+- **User**: An entity with credentials that can authenticate against the system.
+- **Session**: A time-bounded authentication context tied to a single user.
+- **Cost factor**: The computational work parameter for the bcrypt hashing algorithm.
+
+## Decomposition Guidance
+
+This specification should be decomposed into implementation documents covering: (1) user account management, (2) authentication flow, and (3) session lifecycle. Each area maps to a functional requirement group above.
+`;
 
 function findRule(
   results: Ring0RuleResult[],
@@ -76,10 +108,22 @@ describe('validateSpecRing0', () => {
   // ---- R0-S02 - ID uniqueness (single-doc mode) ----
 
   describe('R0-S02 - ID uniqueness', () => {
-    it('always passes in single-document mode', () => {
+    it('passes in single-document mode', () => {
       const result = validateSpecRing0(validSpec, validMarkdown);
       const rule = findRule(result.results, 'R0-S02');
       expect(rule?.passed).toBe(true);
+    });
+
+    it('still passes in single-document mode even when spec id duplicates another (pipeline concern)', () => {
+      // R0-S02 is trivially true in single-document mode; cross-doc
+      // uniqueness is enforced at the pipeline level, not the validator.
+      // Here we supply a spec whose id could collide with another doc —
+      // the validator must still report pass for R0-S02.
+      const duplicateIdSpec: SpecDefinition = { ...validSpec, id: 'spec-a1b2c3d4' };
+      const result = validateSpecRing0(duplicateIdSpec, validMarkdown);
+      const rule = findRule(result.results, 'R0-S02');
+      expect(rule?.passed).toBe(true);
+      expect(rule?.message).toContain('single-document mode');
     });
   });
 
