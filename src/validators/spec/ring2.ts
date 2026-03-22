@@ -23,9 +23,15 @@ Respond with ONLY a JSON object in this exact structure (no markdown fencing, no
 {
   "check": "R2-S01",
   "dimension": "decomposition-readiness",
-  "verdict": "pass" or "fail",
-  "evidence": "specific observations supporting the verdict",
-  "summary": "one-sentence summary of the assessment"
+  "verdict": "pass" | "fail",
+  "evidence": [
+    {
+      "reference": "string — section or element assessed",
+      "finding": "string — what you observed",
+      "assessment": "pass" | "fail"
+    }
+  ],
+  "summary": "string — one-sentence overall assessment"
 }
 
 Set verdict to "pass" if the spec has enough detail for implementation document decomposition — clear boundaries, defined interfaces, no deferred key decisions. Set verdict to "fail" if key decisions are deferred, boundaries are unclear, or there is insufficient detail for decomposition.`;
@@ -49,9 +55,15 @@ Respond with ONLY a JSON object in this exact structure (no markdown fencing, no
 {
   "check": "R2-S02",
   "dimension": "requirement-precision",
-  "verdict": "pass" or "fail",
-  "evidence": "specific observations supporting the verdict",
-  "summary": "one-sentence summary of the assessment"
+  "verdict": "pass" | "fail",
+  "evidence": [
+    {
+      "reference": "string — section or element assessed",
+      "finding": "string — what you observed",
+      "assessment": "pass" | "fail"
+    }
+  ],
+  "summary": "string — one-sentence overall assessment"
 }
 
 Set verdict to "pass" if all requirements are specific and testable with no ambiguity. Set verdict to "fail" if any requirement is vague, untestable, or open to multiple interpretations.`;
@@ -75,10 +87,16 @@ Respond with ONLY a JSON object in this exact structure (no markdown fencing, no
 {
   "check": "R2-S03",
   "dimension": "completeness",
-  "verdict": "pass" or "fail",
-  "evidence": "specific observations supporting the verdict",
-  "summary": "one-sentence summary of the assessment"
+  "verdict": "pass" | "fail",
+  "evidence": [
+    {
+      "reference": "string — section or element assessed",
+      "finding": "string — what you observed",
+      "assessment": "pass" | "fail"
+    }
+  ],
+  "summary": "string — one-sentence overall assessment"
 }
 
-Set verdict to "pass" if no obvious gaps are found and the spec covers the feature comprehensively. Set verdict to "fail" if missing areas are identified, and describe them in the evidence field.`;
+Set verdict to "pass" if no obvious gaps are found and the spec covers the feature comprehensively. Set verdict to "fail" if missing areas are identified, and describe each as an evidence object with reference, finding, and assessment.`;
 }
