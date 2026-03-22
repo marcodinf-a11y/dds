@@ -1,5 +1,8 @@
 import { createRequire } from 'node:module';
 import AjvModule from 'ajv';
+import addFormatsModule from 'ajv-formats';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const addFormats = addFormatsModule as any;
 import type { TaskDefinition, ExecutionRecord } from '../../types/definitions.js';
 import { extractHeadings } from '../../parsers/markdown.js';
 import { detectCycle } from '../../parsers/graph.js';
@@ -27,6 +30,7 @@ export interface ExecutionRecordContext {
 // --- Shared ajv instance ---
 
 const ajv = new Ajv({ allErrors: true, strict: false });
+addFormats(ajv);
 const validateTaskSchema = ajv.compile(taskSchema);
 const validateExecSchema = ajv.compile(executionRecordSchema);
 

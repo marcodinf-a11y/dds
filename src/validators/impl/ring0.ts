@@ -1,5 +1,8 @@
 import { createRequire } from 'node:module';
 import AjvModule from 'ajv';
+import addFormatsModule from 'ajv-formats';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const addFormats = addFormatsModule as any;
 import type { ImplDefinition } from '../../types/definitions.js';
 import { extractHeadings } from '../../parsers/markdown.js';
 import { buildAdjacencyList, detectCycles } from '../../parsers/graph.js';
@@ -21,6 +24,7 @@ export interface ImplValidationContext {
 // --- Shared ajv instance ---
 
 const ajv = new Ajv({ allErrors: true, strict: false });
+addFormats(ajv);
 const validateImplSchema = ajv.compile(implSchema);
 
 // --- Required H2 sections in order ---

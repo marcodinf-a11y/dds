@@ -1,0 +1,120 @@
+{
+  "document_id": "spec-fa3a90b8",
+  "document_level": "spec",
+  "reason": "max_iterations",
+  "iterations_completed": 5,
+  "unresolved_issues": [
+    {
+      "rule": "R1-S02",
+      "reference": "FR-01"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-06"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-14"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-17"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-19"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-25"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-31"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-33"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-36"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-54"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-61"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-63"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-64"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-71"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-76"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "FR-77"
+    },
+    {
+      "rule": "R1-S02",
+      "reference": "NFR-06"
+    }
+  ],
+  "history": [
+    {
+      "iteration": 1,
+      "ring0_passed": true,
+      "ring1_passed": false,
+      "ring2_passed": null,
+      "issues_found": 3,
+      "fix_applied": "semantic"
+    },
+    {
+      "iteration": 2,
+      "ring0_passed": false,
+      "ring1_passed": null,
+      "ring2_passed": null,
+      "issues_found": 1,
+      "fix_applied": "structural"
+    },
+    {
+      "iteration": 3,
+      "ring0_passed": true,
+      "ring1_passed": false,
+      "ring2_passed": null,
+      "issues_found": 1,
+      "fix_applied": "semantic"
+    },
+    {
+      "iteration": 4,
+      "ring0_passed": false,
+      "ring1_passed": null,
+      "ring2_passed": null,
+      "issues_found": 1,
+      "fix_applied": "structural"
+    },
+    {
+      "iteration": 5,
+      "ring0_passed": false,
+      "ring1_passed": null,
+      "ring2_passed": null,
+      "issues_found": 1,
+      "fix_applied": "structural"
+    }
+  ],
+  "document_snapshot": "/home/marco/repos/dds/specs/descriptions/spec-fa3a90b8.md",
+  "timestamp": "2026-03-22T20:16:38.219Z"
+}

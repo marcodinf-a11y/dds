@@ -1,0 +1,34 @@
+{
+  "runId": "d85d44dd-6cc2-4cf7-9c38-8a0a80594c5d",
+  "rootSpecId": "spec-fa3a90b8",
+  "startedAt": "2026-03-22T19:49:08.199Z",
+  "finishedAt": "2026-03-22T20:16:38.219Z",
+  "overallStatus": "escalated",
+  "documentResults": [
+    {
+      "id": "spec-fa3a90b8",
+      "level": "spec",
+      "status": "failed",
+      "ring0_passed": false,
+      "ring1_passed": null,
+      "ring2_passed": null,
+      "iteration_count": 0
+    }
+  ],
+  "statistics": {
+    "documents_validated": {
+      "spec": 1,
+      "impl": 0,
+      "task": 0
+    },
+    "cross_level_checks_passed": 0,
+    "total_llm_calls": 0,
+    "total_token_usage": 0,
+    "refinement_iterations": {
+      "spec": 0,
+      "impl": 0,
+      "task": 0
+    },
+    "escalation_count": 1
+  }
+}

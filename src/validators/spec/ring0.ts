@@ -1,5 +1,8 @@
 import { createRequire } from 'node:module';
 import AjvModule from 'ajv';
+import addFormatsModule from 'ajv-formats';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const addFormats = addFormatsModule as any;
 import type { SpecDefinition } from '../../types/definitions.js';
 import type { Ring0Result, Ring0RuleResult } from '../../types/results.js';
 import { extractHeadings } from '../../parsers/markdown.js';
@@ -11,6 +14,7 @@ const specSchema = require('../../schemas/spec.schema.json') as Record<string, u
 // --- Module-level ajv instance and compiled validator ---
 
 const ajv = new Ajv({ allErrors: true, strict: false });
+addFormats(ajv);
 const validateSchema = ajv.compile(specSchema);
 
 // --- Required H2 sections in order ---

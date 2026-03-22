@@ -2,6 +2,9 @@ import { execSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import AjvModule from 'ajv';
+import addFormatsModule from 'ajv-formats';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const addFormats = addFormatsModule as any;
 const Ajv = AjvModule.default ?? AjvModule;
 
 // ---------------------------------------------------------------------------
@@ -85,6 +88,7 @@ export function loadConfig(): ResolvedConfig {
   const schema = JSON.parse(schemaRaw);
 
   const ajv = new Ajv();
+  addFormats(ajv);
   const validate = ajv.compile(schema);
   if (!validate(parsed)) {
     const msg = validate.errors
@@ -230,6 +234,7 @@ export function callClaude<T = unknown>(
 
       // Double-validate with ajv
       const ajv = new Ajv();
+  addFormats(ajv);
       const validate = ajv.compile(jsonSchema);
       if (!validate(parsed)) {
         const msg = validate.errors
