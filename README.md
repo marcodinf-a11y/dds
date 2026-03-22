@@ -53,6 +53,15 @@ dds/
 │   ├── 03-atomic-task-schema.md # Atomic task format
 │   ├── 04-validation-pipeline.md # Pipeline orchestration
 │   └── 05-agent-guide.md       # Operational guide for Claude Code
+├── src/                         # Pipeline implementation
+│   ├── cli/                     # CLI entry points
+│   ├── llm/                     # LLM invocation (claude-cli, fix, ring1/2 runners)
+│   ├── parsers/                 # Markdown and graph utilities
+│   ├── pipeline/                # Orchestrator, refinement loop, convergence, escalation
+│   ├── schemas/                 # JSON schemas for all artifact types
+│   ├── types/                   # TypeScript type definitions
+│   └── validators/              # Ring 0/1/2 validators per level + cross-level
+├── tests/                       # Unit tests and fixtures
 ├── specs/                       # Specification artifacts
 │   ├── definitions/             # JSON definitions
 │   └── descriptions/            # Markdown descriptions
@@ -63,12 +72,8 @@ dds/
 │   ├── definitions/
 │   ├── descriptions/
 │   └── executions/              # Runtime execution records
-├── validation/                  # Validation infrastructure
-│   ├── ring0/                   # Structural validators
-│   ├── ring1/                   # Semantic check prompts
-│   ├── ring2/                   # Quality rubrics
-│   └── cross-level/             # Cross-document invariant checkers
 └── pipeline/
+    ├── config.json              # Pipeline configuration (optional)
     ├── reports/                 # Pipeline run summaries
     └── escalations/             # Unresolved issue reports
 ```
@@ -86,16 +91,101 @@ All IDs use 8 random hex characters with a type prefix. No central counter, no c
 
 Generate with: `openssl rand -hex 4`
 
+## Getting Started
+
+```bash
+npm install
+```
+
+### Run the Full Pipeline
+
+Validate a spec, decompose it into impl docs, decompose those into atomic tasks, and run cross-level checks — all in one command:
+
+```bash
+npx tsx src/cli/run-pipeline.ts <spec-id>
+```
+
+Example: `npx tsx src/cli/run-pipeline.ts spec-fa3a90b8`
+
+The pipeline runs four phases sequentially and halts at the first escalation:
+1. Validate the root spec (Ring 0 → Ring 1 → Ring 2, with auto-fix)
+2. Decompose spec into impl docs, validate each
+3. Decompose impl docs into atomic tasks, validate each, check cross-task invariants
+4. Run all cross-level invariants (CL-S, CL-T, CL-F)
+
+Exit code 0 = all phases passed. Exit code 1 = escalation (see `pipeline/escalations/`).
+
+### Validate Individual Documents
+
+```bash
+# Validate a spec (Ring 0 structural checks)
+npx tsx src/cli/validate-spec.ts <spec-id>
+
+# Validate an implementation document
+npx tsx src/cli/validate-impl.ts <impl-id>
+
+# Validate an atomic task
+npx tsx src/cli/validate-task.ts <task-id>
+
+# Run cross-level invariants for a spec and all its descendants
+npx tsx src/cli/validate-cross.ts <spec-id>
+```
+
+Each validator loads the JSON definition from `{type}/definitions/{id}.json` and the markdown description from `{type}/descriptions/{id}.md`, runs Ring 0 checks, and exits 0 (pass) or 1 (fail) with a JSON report on stdout.
+
+### Refine a Document
+
+Run the full validation + auto-fix loop on a single document:
+
+```bash
+npx tsx src/cli/refine.ts <document-path> <level>
+```
+
+Where `<level>` is `spec`, `impl`, or `task`. The refinement loop runs Ring 0 → Ring 1 → Ring 2, auto-fixes failures, and retries until the document passes or convergence is detected (same issues repeating). Escalation reports are written to `pipeline/escalations/`.
+
+### Scope Guard
+
+Check whether a file path is within an atomic task's declared scope:
+
+```bash
+npx tsx src/cli/scope-guard.ts <file-path> <task-id>
+```
+
+Exit code 0 = allowed, 1 = blocked. Intended for use in pre-commit hooks to enforce file scope during task execution.
+
+## Configuration
+
+Pipeline behavior is controlled by `pipeline/config.json`. All fields are optional — omit any to use defaults.
+
+```json
+{
+  "refinement": {
+    "max_iterations": 5,
+    "convergence_threshold": 0.7
+  },
+  "timeouts": {
+    "ring1_check_seconds": 60,
+    "ring2_check_seconds": 90,
+    "fix_call_seconds": 120
+  },
+  "claude_cli": {
+    "max_retries_on_short_429": 3,
+    "backoff_multiplier": 2,
+    "delay_between_calls_ms": 2000
+  }
+}
+```
+
+Schema: [`src/schemas/pipeline-config.schema.json`](src/schemas/pipeline-config.schema.json)
+
+## Prerequisites
+
+- **Node.js** (v18+)
+- **Claude CLI** (`claude`) — required for Ring 1/2 checks, fix functions, and decomposition. Ring 0 validation works without it.
+
 ## Usage with Claude Code
 
-DDS is designed to operate with Claude Code using subagents, slash commands, and hooks:
-
-- **`/project:validate <path>`** — Run the three-ring validation pipeline on a document
-- **`/project:decompose-spec <path>`** — Decompose a validated spec into implementation documents
-- **`/project:decompose-impl <path>`** — Decompose a validated impl doc into atomic tasks
-- **`/project:execute-task <path>`** — Execute an atomic task
-
-See [docs/05-agent-guide.md](docs/05-agent-guide.md) for full setup instructions including CLAUDE.md configuration, hooks, subagents, and skills.
+DDS is designed to also operate with Claude Code using subagents, slash commands, and hooks. See [docs/05-agent-guide.md](docs/05-agent-guide.md) for setup instructions including CLAUDE.md configuration, hooks, subagents, and skills.
 
 ## Documentation
 
