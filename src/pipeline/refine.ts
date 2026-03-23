@@ -166,12 +166,15 @@ function runRing0(
         fs.readFileSync(jsonPath, "utf-8"),
       );
 
-      // Build context by scanning existing artifacts on disk
+      // Build context by scanning existing artifacts on disk.
+      // Exclude the current document's own ID — R0-I41 checks uniqueness
+      // against *other* impl docs, not against itself.
       const implDefsDir = path.dirname(jsonPath);
       const existingImplIds = fs.existsSync(implDefsDir)
         ? fs.readdirSync(implDefsDir)
             .filter((f) => f.endsWith(".json"))
             .map((f) => f.replace(".json", ""))
+            .filter((id) => id !== impl.id)
         : [];
 
       const tasksDefsDir = path.resolve("tasks", "definitions");
