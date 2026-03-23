@@ -43,17 +43,23 @@ Set verdict to "fail" if any inconsistencies are found, and list each one in the
 export function buildR1S02Prompt(specMarkdown: string): string {
   return `You are a specification reviewer. Analyze the following specification document for requirement atomicity.
 
-Examine each functional requirement (FR-XX) and non-functional requirement (NFR-XX) in the document. Each requirement should define exactly one testable behavior or constraint.
+Examine each functional requirement (FR-XX) and non-functional requirement (NFR-XX). A requirement is atomic if it describes ONE decision, rule, or constraint — even if that single concept has multiple parts, examples, or conditions.
 
-**What IS atomic (do NOT flag these):**
-- A requirement that enumerates values of a single concept (e.g., "status shall be one of: draft, validated, decomposed" — this is one enum, not three requirements)
-- A requirement that lists ordered sections or hierarchy levels (e.g., "shall contain these H2 sections in order: A, B, C" — this is one structural rule)
-- A requirement that defines a field together with its semantics (e.g., "shall include a verify field containing a shell command that passes on exit code 0" — field and behavior are inseparable)
-- A requirement with a clarifying clause that restates or elaborates the main rule without adding an independently testable behavior
+**Atomic — do NOT flag:**
+- Enumerating values of a single concept: "status shall be one of: draft, validated, decomposed"
+- Listing ordered elements of a single structure: "shall contain these H2 sections in order: A, B, C"
+- Defining a field with its type and semantics: "shall include a finished_at field containing an ISO 8601 timestamp, null while in progress"
+- A rule with a parenthetical example: "shall validate status-field consistency (e.g., child arrays empty when draft)"
+- Sequential gating expressed as one policy: "Ring 1 only if Ring 0 passes. Ring 2 only if Ring 1 passes" — this is one gating policy, not two requirements
+- A configuration point with its scope: "timeouts shall be configurable per operation type via config.json"
+- Schema conformance: "definitions shall conform to the X JSON schema"
+- A format rule: "shall begin with an H1 heading matching pattern X"
 
-**What is NOT atomic (flag these):**
-- A requirement that joins two independently testable behaviors with "and" where each could be implemented and verified separately
-- A requirement that describes two unrelated side effects of the same trigger that could reasonably be split
+**Not atomic — flag these:**
+- Two independently implementable and testable behaviors joined by "and" where splitting them would NOT break either one's meaning
+- Two unrelated side effects of the same trigger that affect different parts of the system
+
+**The bar for flagging is HIGH.** If you are unsure whether a requirement is compound, it is probably atomic. Most requirements with subordinate clauses, examples, or conditions are describing one concept with necessary detail, not two independent behaviors.
 
 <spec-content>
 ${specMarkdown}
@@ -66,13 +72,13 @@ Respond with ONLY a JSON object in this exact structure (no markdown fencing, no
   "issues": [
     {
       "reference": "string — the FR-XX or NFR-XX identifier",
-      "description": "string — what specifically makes it non-atomic, citing the two independent behaviors"
+      "description": "string — the two independent behaviors that should be separate requirements"
     }
   ]
 }
 
 If no issues are found, return an empty issues array with verdict "pass".
-Set verdict to "fail" only if a requirement contains genuinely independent behaviors that should be separate requirements.`;
+Only flag requirements where you can clearly name two behaviors that could each stand alone as a separate requirement.`;
 }
 
 /**
