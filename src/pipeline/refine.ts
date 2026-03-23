@@ -9,6 +9,7 @@
  */
 
 import * as fs from "node:fs";
+import * as path from "node:path";
 
 import type { ResolvedConfig } from "../llm/claude-cli.js";
 import { runRing1Check } from "../llm/ring1.js";
@@ -164,11 +165,45 @@ function runRing0(
       const impl: ImplDefinition = JSON.parse(
         fs.readFileSync(jsonPath, "utf-8"),
       );
+
+      // Build context by scanning existing artifacts on disk
+      const implDefsDir = path.dirname(jsonPath);
+      const existingImplIds = fs.existsSync(implDefsDir)
+        ? fs.readdirSync(implDefsDir)
+            .filter((f) => f.endsWith(".json"))
+            .map((f) => f.replace(".json", ""))
+        : [];
+
+      const tasksDefsDir = path.resolve("tasks", "definitions");
+      const existingTaskIds = fs.existsSync(tasksDefsDir)
+        ? fs.readdirSync(tasksDefsDir)
+            .filter((f) => f.endsWith(".json"))
+            .map((f) => f.replace(".json", ""))
+        : [];
+
+      const taskDefinitions = existingTaskIds.map((tid) => {
+        try {
+          const t = JSON.parse(fs.readFileSync(path.join(tasksDefsDir, `${tid}.json`), "utf-8"));
+          return { id: t.id, parent: t.parent, scope: { modules: t.scope?.modules ?? [] } };
+        } catch {
+          return { id: tid, parent: "", scope: { modules: [] as string[] } };
+        }
+      });
+
+      const dependencyGraph = existingImplIds.flatMap((iid) => {
+        try {
+          const d = JSON.parse(fs.readFileSync(path.join(implDefsDir, `${iid}.json`), "utf-8"));
+          return (d.dependencies ?? []).map((dep: string) => ({ from: iid, to: dep }));
+        } catch {
+          return [];
+        }
+      });
+
       const context: ImplValidationContext = {
-        existingImplIds: [],
-        existingTaskIds: [],
-        taskDefinitions: [],
-        dependencyGraph: [],
+        existingImplIds,
+        existingTaskIds,
+        taskDefinitions,
+        dependencyGraph,
       };
       const result = validateImplRing0(impl, documentContent, context);
 
