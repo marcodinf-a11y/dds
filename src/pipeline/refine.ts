@@ -29,7 +29,7 @@ import {
   validateImplRing0,
   type ImplValidationContext,
 } from "../validators/impl/ring0.js";
-import type { SpecDefinition, ImplDefinition } from "../types/definitions.js";
+import type { SpecDefinition, ImplDefinition, TaskDefinition } from "../types/definitions.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -93,44 +93,59 @@ function runRing0(
 ): Ring0RunResult {
   switch (level) {
     case "task": {
-      // Task Ring 0 needs the JSON definition and the markdown content.
-      // The refinement loop operates on the markdown description file.
-      // We parse a minimal TaskDefinition stub from the filename for ID,
-      // but the full validator needs richer context. For the refinement
-      // loop, we treat the document content as markdown and run a
-      // lightweight structural check.
-      //
-      // The full validateTaskRing0 requires (TaskDefinition, markdown,
-      // TaskValidationContext). Since the refinement loop only has the
-      // file path, we pass the content through and check markdown structure.
-      // The JSON definition validation is handled separately by the
-      // orchestrator before entering the refinement loop.
+      // Read the real task JSON definition from disk if available,
+      // otherwise fall back to a minimal stub (e.g., during tests)
+      const taskJsonPath = documentPath.replace("/descriptions/", "/definitions/").replace(/\.md$/, ".json");
+      let taskDef: TaskDefinition;
+      try {
+        taskDef = JSON.parse(fs.readFileSync(taskJsonPath, "utf-8"));
+      } catch {
+        const taskId = extractTaskIdFromPath(documentPath);
+        taskDef = {
+          id: taskId,
+          parent: "impl-00000000",
+          description: `${taskId}.md`,
+          blocked_by: [],
+          blocks: [],
+          scope: { files: [documentPath], modules: ["unknown"] },
+          acceptance_criteria: [],
+          context_refs: ["spec-00000000#placeholder"],
+        } as TaskDefinition;
+      }
 
-      // Import and run the task Ring 0 markdown structural checks.
-      // We build a minimal TaskDefinition from the document path for the
-      // ID-based checks.
-      const taskId = extractTaskIdFromPath(documentPath);
-      const minimalTask = {
-        id: taskId,
-        parent: "impl-00000000",
-        description: `${taskId}.md`,
-        blocked_by: [] as string[],
-        blocks: [] as string[],
-        scope: { files: [documentPath], modules: ["unknown"] },
-        acceptance_criteria: [],
-        context_refs: ["spec-00000000#placeholder"],
-      };
-      const minimalContext = {
-        siblingTasks: [],
-        existingTaskIds: new Set<string>(),
-        parentImplId: "impl-00000000",
-        descriptionFileExists: true,
+      // Build context by scanning existing task definitions on disk
+      const taskDefsDir = path.dirname(taskJsonPath);
+      const allTaskFiles = fs.existsSync(taskDefsDir)
+        ? fs.readdirSync(taskDefsDir).filter((f) => f.endsWith(".json"))
+        : [];
+      const siblingTasks = allTaskFiles
+        .filter((f) => f !== `${taskDef.id}.json`)
+        .map((f) => {
+          try {
+            return JSON.parse(fs.readFileSync(path.join(taskDefsDir, f), "utf-8"));
+          } catch {
+            return null;
+          }
+        })
+        .filter((t): t is NonNullable<typeof t> => t !== null);
+
+      const existingTaskIds = new Set(allTaskFiles.map((f) => f.replace(".json", "")));
+      // Remove self so R0-T02 uniqueness check works correctly
+      existingTaskIds.delete(taskDef.id);
+
+      const descriptionFileExists = fs.existsSync(documentPath);
+
+      const taskContext = {
+        siblingTasks,
+        existingTaskIds,
+        parentImplId: taskDef.parent,
+        descriptionFileExists,
       };
 
       const result = validateTaskRing0(
-        minimalTask,
+        taskDef,
         documentContent,
-        minimalContext,
+        taskContext,
       );
 
       const failures = result.results
